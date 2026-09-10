@@ -1,0 +1,44 @@
+<?xml version="1.0" ?>
+<kmc version="(0, 4)">
+    <meta author="Lucas Yuan" email="lucasmyuan@gmail.com" model_name="CO2 Reduction to CO (with salt precipitation)" model_dimension="2" debug="0"/>
+    <species_list default_species="empty">
+        <species name="CO" representation="Atoms('CO', [[0, 0, 0], [0, 0, 1.13]])" tags=""/>
+        <species name="CO2" representation="Atoms('OCO', [[0, 0, 0], [0, 0, 0], [0, 0, 0]])" tags=""/>
+        <species name="COOH" representation="Atoms('COOH',[[0, 0, 0], [-1.0392304845413263, 0, 0.6], [1.1518137870333034, 0, 0.665], [0.9171495483016257, 0, 1.6061868544877167]])" tags=""/>
+        <species name="empty" representation="" tags=""/>
+    </species_list>
+    <parameter_list>
+        <parameter name="A" value="(2.8892*angstrom)**2" adjustable="False" min="0.0" max="0.0" scale="linear"/>
+        <parameter name="CO2_COOH" value="1.0" adjustable="True" min="1e-08" max="100000000.0" scale="linear"/>
+        <parameter name="COOH_CO" value="1.0" adjustable="True" min="1e-08" max="100000000.0" scale="linear"/>
+        <parameter name="CO_de" value="1.0" adjustable="True" min="1e-08" max="100000000.0" scale="linear"/>
+        <parameter name="PREFACTOR" value="10000000000000.0" adjustable="True" min="1e-08" max="1e+20" scale="linear"/>
+        <parameter name="T" value="293.15" adjustable="True" min="100" max="700" scale="linear"/>
+        <parameter name="bias_v" value="-3.0" adjustable="True" min="-6" max="0" scale="linear"/>
+        <parameter name="deltaG_CO2_COOH" value="1.0" adjustable="True" min="-2" max="2" scale="linear"/>
+        <parameter name="deltaG_COOH_CO" value="-0.632" adjustable="True" min="-2" max="2" scale="linear"/>
+        <parameter name="deltaG_CO_COfree" value="-0.423" adjustable="True" min="-2" max="2" scale="linear"/>
+        <parameter name="p_CO2" value="1.0" adjustable="True" min="1e-10" max="100.0" scale="linear"/>
+    </parameter_list>
+    <lattice cell_size="2.8892 0.0 0.0 0.0 2.8892 0.0 0.0 0.0 5.0" default_layer="simple_cubic" substrate_layer="simple_cubic" representation="">
+        <layer name="simple_cubic" color="#ffffff">
+            <site pos="0.5 0.5 0.5" type="Ag_site" tags="" default_species="empty"/>
+        </layer>
+    </lattice>
+    <process_list>
+        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-(deltaG_CO2_COOH+0.5*bias_v)*eV*beta)*CO2_COOH" name="CO2_COOH" enabled="True">
+            <condition species="empty" coord_layer="simple_cubic" coord_name="Ag_site" coord_offset="0 0 0"/>
+            <action species="COOH" coord_layer="simple_cubic" coord_name="Ag_site" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="PREFACTOR*exp(-deltaG_COOH_CO*eV*beta)*COOH_CO" name="COOH_CO" enabled="True">
+            <condition species="COOH" coord_layer="simple_cubic" coord_name="Ag_site" coord_offset="0 0 0"/>
+            <action species="CO" coord_layer="simple_cubic" coord_name="Ag_site" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="PREFACTOR*exp(-deltaG_CO_COfree*eV*beta)*CO_de" name="CO_de" enabled="True">
+            <condition species="CO" coord_layer="simple_cubic" coord_name="Ag_site" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="simple_cubic" coord_name="Ag_site" coord_offset="0 0 0"/>
+        </process>
+    </process_list>
+    <output_list/>
+    <connected_variables connected_variables_string="{'surroundingSitesDict': {}}"/>
+</kmc>

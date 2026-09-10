@@ -30,11 +30,21 @@ use kind_values
 use base, only: &
     update_accum_rate, &
     update_integ_rate, &
+    update_integ_counter, &
+    update_integ_rate_sb, &
     determine_procsite, &
     update_clocks, &
     avail_sites, &
     null_species, &
-    increment_procstat
+    increment_procstat, &
+    update_eq_proc, &
+    check_proc_eq, &
+    unscale_reactions, &
+    scale_reactions, &
+    update_sum_sf, &
+    get_save_limit, &
+    save_execution, &
+    reset_saved_execution_data
 
 use lattice, only: &
     ruo2, &
@@ -117,8 +127,17 @@ integer(kind=iint), public, dimension(:), allocatable :: seed_arr ! random seed
 
 integer(kind=iint), parameter, public :: nr_of_proc = 36
 
+integer(kind=iint), public :: counter_sp
+integer(kind=iint), public :: counter_ini
+integer(kind=ishort), public :: debug
+
 
 contains
+
+subroutine set_debug_level(debug_level)
+    integer(kind=ishort), intent(in) :: debug_level
+    debug = debug_level
+end subroutine set_debug_level
 
 subroutine do_kmc_steps(n)
 
@@ -149,63 +168,128 @@ subroutine do_kmc_steps(n)
     call update_clocks(ran_time)
 
     call update_integ_rate
+    call update_integ_counter
     call determine_procsite(ran_proc, ran_site, proc_nr, nr_site)
     call run_proc_nr(proc_nr, nr_site)
     enddo
 
 end subroutine do_kmc_steps
 
-subroutine do_kmc_steps_time(t, n, num_iter)
-!****f* proclist/do_kmc_steps_time
+subroutine do_acc_kmc_steps(n, sampling_steps, stats, save_exe, save_proc)
+
+!****f* proclist/do_acc_kmc_steps
 ! FUNCTION
-!    Performs a variable number of KMC steps to try to match the requested
-!    simulation time as closely as possible without going over. This routine
-!    always performs at least one KMC step before terminating.
-!    * Determine the time step for the next process
-!    * If the time limit is not exceeded, update clocks, rates, execute process,
-!      etc.; otherwise, abort.
-!    Ideally we would use state(seed_size) but that was not working, so hardcoded size.
+!    Performs ``n`` kMC step in accelerated mode.
+!    * first update clock
+!    * then configuration sampling step
+!    * then execute process
+!    * last do checks in acc. scheme
+!    * if stats is True, calculate statistics
 !
 ! ARGUMENTS
 !
-!    ``t`` : Requested simulation time increment (input)
-!    ``n`` : Maximum number of steps to run (input)
-!    ``num_iter`` : the number of executed iterations (output)
+!    ``n`` : Number of steps to run
+!    ``sampling_steps`` : Number of steps in sampling period.
+!    ``stats`` : Logical, if True statistics will be calculated
+!    ``save_exe`` : Logical, if True the executions following the
+!    the process save_proc will be saved.
 !******
-    use base, only: get_accum_rate
-    real(kind=rdouble), intent(in) :: t
     integer(kind=ilong), intent(in) :: n
-    integer(kind=ilong), intent(out) :: num_iter
+    integer(kind=iint), intent(in) :: sampling_steps, save_proc
+    logical, intent(in) :: stats, save_exe
 
     integer(kind=ilong) :: i
     real(kind=rsingle) :: ran_proc, ran_time, ran_site
-    integer(kind=iint) :: nr_site, proc_nr
-    integer(kind=iint) :: state(33)
-    real(kind=rdouble) :: time_step, loop_kmc_time, accum_rate
+    integer(kind=iint) :: nr_site, proc_nr, save_counter, save_limit
+    logical :: is_eq, counting
 
-    loop_kmc_time = 0
-    num_iter = 0
+    save_counter = 0
+    counting = .false.
+    call get_save_limit(save_limit)
+    call reset_saved_execution_data()
+
     do i = 1, n
-      call random_seed(get=state)
-      call random_number(ran_time)
-      call random_number(ran_proc)
-      call random_number(ran_site)
-      call update_accum_rate
-      call get_accum_rate(0, accum_rate)
-      time_step = -log(ran_time)/accum_rate
-      if ((loop_kmc_time + time_step > t) .and. (num_iter > 0)) then
-        call random_seed(put=state)
-        exit
-      else
-        call update_clocks(ran_time)
-        call update_integ_rate
-        call determine_procsite(ran_proc, ran_site, proc_nr, nr_site)
-        call run_proc_nr(proc_nr, nr_site)
-        loop_kmc_time = loop_kmc_time + time_step
-        num_iter = num_iter + 1
-      end if
-    end do
-end subroutine do_kmc_steps_time
+    call random_number(ran_time)
+    call random_number(ran_proc)
+    call random_number(ran_site)
+
+    !For debugging
+    if (debug > 2) then
+        print *,"PROCLIST/DO_ACC_KMC_STEPS/RAN_TIME",ran_time
+        print *,"PROCLIST/DO_ACC_KMC_STEPS/RAN_PROC",ran_proc
+        print *,"PROCLIST/DO_ACC_KMC_STEPS/RAN_site",ran_site
+    endif
+
+    call update_accum_rate
+    call update_clocks(ran_time)
+
+    call update_integ_rate
+    call update_integ_counter
+    call update_integ_rate_sb
+    call determine_procsite(ran_proc, ran_site, proc_nr, nr_site)
+
+    !For debugging
+    if (debug > 2) then
+        print *,"PROCLIST/DO_ACC_KMC_STEPS/PROC_NR", proc_nr
+        print *,"PROCLIST/DO_ACC_KMC_STEPS/SITE", nr_site
+    endif
+
+    call run_proc_nr(proc_nr, nr_site)
+
+    call update_eq_proc(proc_nr) 
+    call check_proc_eq(proc_nr, is_eq)
+    counter_sp = counter_sp + 1
+
+    if (save_exe) then
+        if (counting .eqv. .false.) then
+            if (proc_nr .eq. save_proc) then
+                counting = .true.
+                save_counter = save_counter + 1
+                call save_execution(proc_nr,save_counter)
+            endif
+        else
+            if (save_counter < save_limit) then
+                save_counter = save_counter + 1
+                call save_execution(proc_nr,save_counter)
+            endif
+        endif
+    endif
+
+    !For debugging
+    if (debug > 2) then
+        print *,"PROCLIST/DO_ACC_KMC_STEPS/IS_EQ", is_eq
+        print *,"PROCLIST/DO_ACC_KMC_STEPS/COUNTER_SP", counter_sp
+        print *,""
+    endif
+
+    if (.not. is_eq) then
+        if (debug > 0) then
+            print *,"IRREV. PROC EXECUTED:", proc_nr
+        endif
+        if (stats) then
+            call update_sum_sf(counter_sp-counter_ini)
+            counter_ini = 0
+        endif
+        call unscale_reactions
+        counter_sp = 0
+    endif
+    if (counter_sp.gt.sampling_steps) then
+        if (debug > 1) then
+            print *,"PROCLIST/DO_ACC_KMC_STEPS: REACTIONS SCALED"
+        endif
+        if (stats) then
+            call update_sum_sf(counter_sp-counter_ini)
+            counter_ini = 0
+        endif
+        call scale_reactions
+        counter_sp = 0
+    endif
+    enddo
+    if (stats) then
+        call update_sum_sf(counter_sp-counter_ini)
+        counter_ini = counter_sp
+    endif
+end subroutine do_acc_kmc_steps
 
 subroutine do_kmc_step()
 
@@ -230,6 +314,7 @@ subroutine do_kmc_step()
     call update_clocks(ran_time)
 
     call update_integ_rate
+    call update_integ_counter
     call determine_procsite(ran_proc, ran_site, proc_nr, nr_site)
     call run_proc_nr(proc_nr, nr_site)
 end subroutine do_kmc_step
@@ -294,7 +379,7 @@ subroutine get_occupation(occupation)
     occupation = occupation/real(system_size(1)*system_size(2)*system_size(3))
 end subroutine get_occupation
 
-subroutine init(input_system_size, system_name, layer, seed_in, no_banner)
+subroutine init(input_system_size, system_name, layer, seed_in, buffer_parameter, threshold_parameter, execution_steps, save_limit, no_banner)
 
 !****f* proclist/init
 ! FUNCTION
@@ -306,9 +391,14 @@ subroutine init(input_system_size, system_name, layer, seed_in, no_banner)
 !    * ``input_system_size`` number of unit cell per axis.
 !    * ``system_name`` identifier for reload file.
 !    * ``layer`` initial layer.
+!    * ``buffer_parameter`` used for temporal acc. scheme.
+!    * ``threshold_parameter`` used for temporal acc. scheme.
+!    * ``execution_steps`` used for temporal acc. scheme.
+!    * ``save_limit`` used for temporal acc. scheme.
 !    * ``no_banner`` [optional] if True no copyright is issued.
 !******
-    integer(kind=iint), intent(in) :: layer, seed_in
+    integer(kind=iint), intent(in) :: layer, seed_in, execution_steps, save_limit
+    real(kind=rdouble), intent(in) :: threshold_parameter, buffer_parameter
     integer(kind=iint), dimension(2), intent(in) :: input_system_size
 
     character(len=400), intent(in) :: system_name
@@ -327,8 +417,8 @@ subroutine init(input_system_size, system_name, layer, seed_in, no_banner)
         print *, "| (C) Max J. Hoffmann mjhoffmann@gmail.com                   |"
         print *, "|                                                            |"
         print *, "| kmcos is distributed in the hope that it will be useful    |"
-        print *, "| but WITHOUT ANY WARRANTY; without even the implied         |"
-        print *, "| warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR    |"
+        print *, "| but WIHTOUT ANY WARRANTY; without even the implied         |"
+        print *, "| waranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR     |"
         print *, "| PURPOSE. See the GNU General Public License for more       |"
         print *, "| details.                                                   |"
         print *, "|                                                            |"
@@ -339,84 +429,20 @@ subroutine init(input_system_size, system_name, layer, seed_in, no_banner)
         print *, "| Computer Physics Communications, 185(7), 2138-2150.        |"
         print *, "|                                                            |"
         print *, "| Development https://github.com/kmcos/kmcos                 |"
-        print *, "| Documentation https://kmcos.readthedocs.io                 |"
+        print *, "| Documentation https://kmcos.readthedocs.org                |"
         print *, "| Reference https://dx.doi.org/10.1016/j.cpc.2014.04.003     |"
         print *, "|                                                            |"
         print *, "+------------------------------------------------------------+"
         print *, ""
         print *, ""
     endif
-    call allocate_system(nr_of_proc, input_system_size, system_name)
+    call allocate_system(nr_of_proc, input_system_size, system_name, buffer_parameter, threshold_parameter, execution_steps, save_limit)
     call initialize_state(layer, seed_in)
+    counter_sp = 0
+    counter_ini = 0
+    debug = 0
 end subroutine init
 
-function get_seed() result(state)
-!****f* proclist/get_seed
-! FUNCTION
-!   Function to retrieve the state of the random number generator to
-!    permit reproducible restart trajectories.
-!
-! ARGUMENTS
-!
-!    * None
-!******
-    integer :: state(33)
-    call random_seed(get=state)
-end function get_seed
-
-subroutine put_seed(state)
-!****f* proclist/put_seed
-! FUNCTION
-!    Subroutine to set the state of the random number generator to
-!    permit reproducible restart trajectories.
-!
-! ARGUMENTS
-!
-!    * ``state`` an array of integers with the state of the random number
-!    generator (input)
-!******  
-    integer, intent(in) :: state(33)
-    call random_seed(put=state)
-end subroutine put_seed 
-
-function seed_gen(sd) result(sarr)
-!****f* proclist/seed_gen
-! FUNCTION
-!    Function to transform a single number into a full set of integers
-!    required for initializing the random number generator.
-!
-! ARGUMENTS
-!
-!    * ``sd`` an integer used to seed a simple random number generator
-!    used to generate additional integers for seeding the production random
-!    number generator (input)
-!******
-
-
-    integer, intent(in) :: sd
-    integer(kind=ilong) :: s
-    integer(kind=ilong) :: sarr(33)
-    integer :: i
-
-!Generate the state array with a simple linear congruential generator. The
-!parameters for this generator are taken from the gfortran documentation on
-!random_seed().
-
-!Initialize the generator
-    if (sd == 0) then
-      s = 104729
-    else
-      s = mod(sd, 4294967296_ilong)
-    end if
-
-!Get values for the seed array
-    do i =1, size(sarr)
-      s = mod(s * 279470273_ilong, 4294967291_ilong)
-      sarr(i) = int(mod(s, int(huge(0), ilong)), kind(0))
-      s = mod(s, 4294967296_ilong)
-    end do
-
-end function seed_gen
 subroutine initialize_state(layer, seed_in)
 
 !****f* proclist/initialize_state
@@ -434,8 +460,8 @@ subroutine initialize_state(layer, seed_in)
     ! initialize random number generator
     allocate(seed_arr(seed_size))
     seed = seed_in
-    seed_arr = seed_gen(seed)
-    call random_seed(size=seed_size)
+    seed_arr = seed
+    call random_seed(seed_size)
     call random_seed(put=seed_arr)
     deallocate(seed_arr)
     do k = 0, system_size(3)-1
@@ -776,37 +802,37 @@ subroutine take_CO_ruo2_bridge(site)
     select case(get_species(site + (/0, 1, 0, 0/)))
     case(O)
         call add_proc(Odiff_bridge_down, site)
-    case(CO)
-        call add_proc(COdiff_bridge_down, site)
     case(empty)
         call add_proc(O2_adsorption_bridge_up, site)
+    case(CO)
+        call add_proc(COdiff_bridge_down, site)
     end select
 
     select case(get_species(site + (/0, -1, 0, 0/)))
     case(O)
         call add_proc(Odiff_bridge_up, site + (/0, -1, 0, 0/))
-    case(CO)
-        call add_proc(COdiff_bridge_up, site + (/0, -1, 0, 0/))
     case(empty)
         call add_proc(O2_adsorption_bridge_up, site + (/0, -1, 0, 0/))
+    case(CO)
+        call add_proc(COdiff_bridge_up, site + (/0, -1, 0, 0/))
     end select
 
     select case(get_species(site + (/0, 0, 0, ruo2_cus - ruo2_bridge/)))
     case(O)
         call add_proc(Odiff_cus_left, site)
-    case(CO)
-        call add_proc(COdiff_cus_left, site)
     case(empty)
         call add_proc(O2_adsorption_bridge_right, site)
+    case(CO)
+        call add_proc(COdiff_cus_left, site)
     end select
 
     select case(get_species(site + (/-1, 0, 0, ruo2_cus - ruo2_bridge/)))
     case(O)
         call add_proc(Odiff_cus_right, site)
-    case(CO)
-        call add_proc(COdiff_cus_right, site)
     case(empty)
         call add_proc(O2_adsorption_cus_right, site)
+    case(CO)
+        call add_proc(COdiff_cus_right, site)
     end select
 
 
@@ -954,37 +980,37 @@ subroutine take_CO_ruo2_cus(site)
     select case(get_species(site + (/1, 0, 0, ruo2_bridge - ruo2_cus/)))
     case(O)
         call add_proc(Odiff_bridge_left, site + (/1, 0, 0, ruo2_bridge - ruo2_cus/))
-    case(CO)
-        call add_proc(COdiff_bridge_left, site + (/1, 0, 0, ruo2_bridge - ruo2_cus/))
     case(empty)
         call add_proc(O2_adsorption_cus_right, site + (/1, 0, 0, ruo2_bridge - ruo2_cus/))
+    case(CO)
+        call add_proc(COdiff_bridge_left, site + (/1, 0, 0, ruo2_bridge - ruo2_cus/))
     end select
 
     select case(get_species(site + (/0, 0, 0, ruo2_bridge - ruo2_cus/)))
     case(O)
         call add_proc(Odiff_bridge_right, site + (/0, 0, 0, ruo2_bridge - ruo2_cus/))
-    case(CO)
-        call add_proc(COdiff_bridge_right, site + (/0, 0, 0, ruo2_bridge - ruo2_cus/))
     case(empty)
         call add_proc(O2_adsorption_bridge_right, site + (/0, 0, 0, ruo2_bridge - ruo2_cus/))
+    case(CO)
+        call add_proc(COdiff_bridge_right, site + (/0, 0, 0, ruo2_bridge - ruo2_cus/))
     end select
 
     select case(get_species(site + (/0, 1, 0, 0/)))
     case(O)
         call add_proc(Odiff_cus_down, site)
-    case(CO)
-        call add_proc(COdiff_cus_down, site)
     case(empty)
         call add_proc(O2_adsorption_cus_up, site)
+    case(CO)
+        call add_proc(COdiff_cus_down, site)
     end select
 
     select case(get_species(site + (/0, -1, 0, 0/)))
     case(O)
         call add_proc(Odiff_cus_up, site + (/0, -1, 0, 0/))
-    case(CO)
-        call add_proc(COdiff_cus_up, site + (/0, -1, 0, 0/))
     case(empty)
         call add_proc(O2_adsorption_cus_up, site + (/0, -1, 0, 0/))
+    case(CO)
+        call add_proc(COdiff_cus_up, site + (/0, -1, 0, 0/))
     end select
 
 
@@ -1054,37 +1080,37 @@ subroutine put_O_ruo2_bridge(site)
     select case(get_species(site + (/0, 0, 0, ruo2_cus - ruo2_bridge/)))
     case(O)
         call add_proc(O2_desorption_bridge_right, site)
-    case(CO)
-        call add_proc(React_bridge_right, site)
     case(empty)
         call add_proc(Odiff_bridge_right, site)
+    case(CO)
+        call add_proc(React_bridge_right, site)
     end select
 
     select case(get_species(site + (/0, 1, 0, 0/)))
     case(O)
         call add_proc(O2_desorption_bridge_up, site)
-    case(CO)
-        call add_proc(React_bridge_up, site)
     case(empty)
         call add_proc(Odiff_bridge_up, site)
+    case(CO)
+        call add_proc(React_bridge_up, site)
     end select
 
     select case(get_species(site + (/0, -1, 0, 0/)))
     case(O)
         call add_proc(O2_desorption_bridge_up, site + (/0, -1, 0, 0/))
-    case(CO)
-        call add_proc(React_bridge_down, site + (/0, -1, 0, 0/))
     case(empty)
         call add_proc(Odiff_bridge_down, site + (/0, -1, 0, 0/))
+    case(CO)
+        call add_proc(React_bridge_down, site + (/0, -1, 0, 0/))
     end select
 
     select case(get_species(site + (/-1, 0, 0, ruo2_cus - ruo2_bridge/)))
     case(O)
         call add_proc(O2_desorption_cus_right, site)
-    case(CO)
-        call add_proc(React_bridge_left, site)
     case(empty)
         call add_proc(Odiff_bridge_left, site)
+    case(CO)
+        call add_proc(React_bridge_left, site)
     end select
 
 
@@ -1151,37 +1177,37 @@ subroutine take_O_ruo2_bridge(site)
     select case(get_species(site + (/0, 1, 0, 0/)))
     case(O)
         call add_proc(Odiff_bridge_down, site)
-    case(CO)
-        call add_proc(COdiff_bridge_down, site)
     case(empty)
         call add_proc(O2_adsorption_bridge_up, site)
+    case(CO)
+        call add_proc(COdiff_bridge_down, site)
     end select
 
     select case(get_species(site + (/0, -1, 0, 0/)))
     case(O)
         call add_proc(Odiff_bridge_up, site + (/0, -1, 0, 0/))
-    case(CO)
-        call add_proc(COdiff_bridge_up, site + (/0, -1, 0, 0/))
     case(empty)
         call add_proc(O2_adsorption_bridge_up, site + (/0, -1, 0, 0/))
+    case(CO)
+        call add_proc(COdiff_bridge_up, site + (/0, -1, 0, 0/))
     end select
 
     select case(get_species(site + (/0, 0, 0, ruo2_cus - ruo2_bridge/)))
     case(O)
         call add_proc(Odiff_cus_left, site)
-    case(CO)
-        call add_proc(COdiff_cus_left, site)
     case(empty)
         call add_proc(O2_adsorption_bridge_right, site)
+    case(CO)
+        call add_proc(COdiff_cus_left, site)
     end select
 
     select case(get_species(site + (/-1, 0, 0, ruo2_cus - ruo2_bridge/)))
     case(O)
         call add_proc(Odiff_cus_right, site)
-    case(CO)
-        call add_proc(COdiff_cus_right, site)
     case(empty)
         call add_proc(O2_adsorption_cus_right, site)
+    case(CO)
+        call add_proc(COdiff_cus_right, site)
     end select
 
 
@@ -1251,37 +1277,37 @@ subroutine put_O_ruo2_cus(site)
     select case(get_species(site + (/0, 0, 0, ruo2_bridge - ruo2_cus/)))
     case(O)
         call add_proc(O2_desorption_bridge_right, site + (/0, 0, 0, ruo2_bridge - ruo2_cus/))
-    case(CO)
-        call add_proc(React_cus_left, site + (/0, 0, 0, ruo2_bridge - ruo2_cus/))
     case(empty)
         call add_proc(Odiff_cus_left, site + (/0, 0, 0, ruo2_bridge - ruo2_cus/))
+    case(CO)
+        call add_proc(React_cus_left, site + (/0, 0, 0, ruo2_bridge - ruo2_cus/))
     end select
 
     select case(get_species(site + (/1, 0, 0, ruo2_bridge - ruo2_cus/)))
     case(O)
         call add_proc(O2_desorption_cus_right, site + (/1, 0, 0, ruo2_bridge - ruo2_cus/))
-    case(CO)
-        call add_proc(React_cus_right, site + (/1, 0, 0, ruo2_bridge - ruo2_cus/))
     case(empty)
         call add_proc(Odiff_cus_right, site + (/1, 0, 0, ruo2_bridge - ruo2_cus/))
+    case(CO)
+        call add_proc(React_cus_right, site + (/1, 0, 0, ruo2_bridge - ruo2_cus/))
     end select
 
     select case(get_species(site + (/0, 1, 0, 0/)))
     case(O)
         call add_proc(O2_desorption_cus_up, site)
-    case(CO)
-        call add_proc(React_cus_up, site)
     case(empty)
         call add_proc(Odiff_cus_up, site)
+    case(CO)
+        call add_proc(React_cus_up, site)
     end select
 
     select case(get_species(site + (/0, -1, 0, 0/)))
     case(O)
         call add_proc(O2_desorption_cus_up, site + (/0, -1, 0, 0/))
-    case(CO)
-        call add_proc(React_cus_down, site + (/0, -1, 0, 0/))
     case(empty)
         call add_proc(Odiff_cus_down, site + (/0, -1, 0, 0/))
+    case(CO)
+        call add_proc(React_cus_down, site + (/0, -1, 0, 0/))
     end select
 
 
@@ -1348,37 +1374,37 @@ subroutine take_O_ruo2_cus(site)
     select case(get_species(site + (/1, 0, 0, ruo2_bridge - ruo2_cus/)))
     case(O)
         call add_proc(Odiff_bridge_left, site + (/1, 0, 0, ruo2_bridge - ruo2_cus/))
-    case(CO)
-        call add_proc(COdiff_bridge_left, site + (/1, 0, 0, ruo2_bridge - ruo2_cus/))
     case(empty)
         call add_proc(O2_adsorption_cus_right, site + (/1, 0, 0, ruo2_bridge - ruo2_cus/))
+    case(CO)
+        call add_proc(COdiff_bridge_left, site + (/1, 0, 0, ruo2_bridge - ruo2_cus/))
     end select
 
     select case(get_species(site + (/0, 0, 0, ruo2_bridge - ruo2_cus/)))
     case(O)
         call add_proc(Odiff_bridge_right, site + (/0, 0, 0, ruo2_bridge - ruo2_cus/))
-    case(CO)
-        call add_proc(COdiff_bridge_right, site + (/0, 0, 0, ruo2_bridge - ruo2_cus/))
     case(empty)
         call add_proc(O2_adsorption_bridge_right, site + (/0, 0, 0, ruo2_bridge - ruo2_cus/))
+    case(CO)
+        call add_proc(COdiff_bridge_right, site + (/0, 0, 0, ruo2_bridge - ruo2_cus/))
     end select
 
     select case(get_species(site + (/0, 1, 0, 0/)))
     case(O)
         call add_proc(Odiff_cus_down, site)
-    case(CO)
-        call add_proc(COdiff_cus_down, site)
     case(empty)
         call add_proc(O2_adsorption_cus_up, site)
+    case(CO)
+        call add_proc(COdiff_cus_down, site)
     end select
 
     select case(get_species(site + (/0, -1, 0, 0/)))
     case(O)
         call add_proc(Odiff_cus_up, site + (/0, -1, 0, 0/))
-    case(CO)
-        call add_proc(COdiff_cus_up, site + (/0, -1, 0, 0/))
     case(empty)
         call add_proc(O2_adsorption_cus_up, site + (/0, -1, 0, 0/))
+    case(CO)
+        call add_proc(COdiff_cus_up, site + (/0, -1, 0, 0/))
     end select
 
 
@@ -1501,28 +1527,57 @@ subroutine touchup_ruo2_bridge(site)
         select case(get_species(site + (/0, 0, 0, ruo2_cus - ruo2_bridge/)))
         case(O)
             call add_proc(O2_desorption_bridge_right, site)
-        case(CO)
-            call add_proc(React_bridge_right, site)
         case(empty)
             call add_proc(Odiff_bridge_right, site)
+        case(CO)
+            call add_proc(React_bridge_right, site)
         end select
 
         select case(get_species(site + (/0, 1, 0, 0/)))
         case(O)
             call add_proc(O2_desorption_bridge_up, site)
-        case(CO)
-            call add_proc(React_bridge_up, site)
         case(empty)
             call add_proc(Odiff_bridge_up, site)
+        case(CO)
+            call add_proc(React_bridge_up, site)
         end select
 
         select case(get_species(site + (/-1, 0, 0, ruo2_cus - ruo2_bridge/)))
         case(O)
             call add_proc(O2_desorption_cus_right, site)
-        case(CO)
-            call add_proc(React_bridge_left, site)
         case(empty)
             call add_proc(Odiff_bridge_left, site)
+        case(CO)
+            call add_proc(React_bridge_left, site)
+        end select
+
+    case(empty)
+        call add_proc(CO_adsorption_bridge, site)
+        select case(get_species(site + (/0, 1, 0, 0/)))
+        case(O)
+            call add_proc(Odiff_bridge_down, site)
+        case(empty)
+            call add_proc(O2_adsorption_bridge_up, site)
+        case(CO)
+            call add_proc(COdiff_bridge_down, site)
+        end select
+
+        select case(get_species(site + (/0, 0, 0, ruo2_cus - ruo2_bridge/)))
+        case(O)
+            call add_proc(Odiff_cus_left, site)
+        case(empty)
+            call add_proc(O2_adsorption_bridge_right, site)
+        case(CO)
+            call add_proc(COdiff_cus_left, site)
+        end select
+
+        select case(get_species(site + (/-1, 0, 0, ruo2_cus - ruo2_bridge/)))
+        case(O)
+            call add_proc(Odiff_cus_right, site)
+        case(empty)
+            call add_proc(O2_adsorption_cus_right, site)
+        case(CO)
+            call add_proc(COdiff_cus_right, site)
         end select
 
     case(CO)
@@ -1546,35 +1601,6 @@ subroutine touchup_ruo2_bridge(site)
             call add_proc(React_bridge_down, site)
         case(empty)
             call add_proc(COdiff_bridge_up, site)
-        end select
-
-    case(empty)
-        call add_proc(CO_adsorption_bridge, site)
-        select case(get_species(site + (/0, 1, 0, 0/)))
-        case(O)
-            call add_proc(Odiff_bridge_down, site)
-        case(CO)
-            call add_proc(COdiff_bridge_down, site)
-        case(empty)
-            call add_proc(O2_adsorption_bridge_up, site)
-        end select
-
-        select case(get_species(site + (/0, 0, 0, ruo2_cus - ruo2_bridge/)))
-        case(O)
-            call add_proc(Odiff_cus_left, site)
-        case(CO)
-            call add_proc(COdiff_cus_left, site)
-        case(empty)
-            call add_proc(O2_adsorption_bridge_right, site)
-        end select
-
-        select case(get_species(site + (/-1, 0, 0, ruo2_cus - ruo2_bridge/)))
-        case(O)
-            call add_proc(Odiff_cus_right, site)
-        case(CO)
-            call add_proc(COdiff_cus_right, site)
-        case(empty)
-            call add_proc(O2_adsorption_cus_right, site)
         end select
 
     end select
@@ -1698,10 +1724,21 @@ subroutine touchup_ruo2_cus(site)
         select case(get_species(site + (/0, 1, 0, 0/)))
         case(O)
             call add_proc(O2_desorption_cus_up, site)
-        case(CO)
-            call add_proc(React_cus_up, site)
         case(empty)
             call add_proc(Odiff_cus_up, site)
+        case(CO)
+            call add_proc(React_cus_up, site)
+        end select
+
+    case(empty)
+        call add_proc(CO_adsorption_cus, site)
+        select case(get_species(site + (/0, 1, 0, 0/)))
+        case(O)
+            call add_proc(Odiff_cus_down, site)
+        case(empty)
+            call add_proc(O2_adsorption_cus_up, site)
+        case(CO)
+            call add_proc(COdiff_cus_down, site)
         end select
 
     case(CO)
@@ -1711,17 +1748,6 @@ subroutine touchup_ruo2_cus(site)
             call add_proc(React_cus_down, site)
         case(empty)
             call add_proc(COdiff_cus_up, site)
-        end select
-
-    case(empty)
-        call add_proc(CO_adsorption_cus, site)
-        select case(get_species(site + (/0, 1, 0, 0/)))
-        case(O)
-            call add_proc(Odiff_cus_down, site)
-        case(CO)
-            call add_proc(COdiff_cus_down, site)
-        case(empty)
-            call add_proc(O2_adsorption_cus_up, site)
         end select
 
     end select

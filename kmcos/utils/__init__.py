@@ -19,7 +19,9 @@
 #    along with kmcos.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import with_statement
 from __future__ import print_function
+import os
 import re
+import shutil
 from time import time
 from io import StringIO
 from kmcos.utils.ordered_dict import OrderedDict
@@ -30,45 +32,91 @@ try:
 except:
     print('Warning: kiwi Validation not working. (this warning is expected)' )
 
-FCODE = """module kind
-implicit none
-contains
-subroutine real_kind(p, r, kind_value)
-  integer, intent(in), optional :: p, r
-  integer, intent(out) :: kind_value
-
-  if(present(p).and.present(r)) then
-    kind_value = selected_real_kind(p=p, r=r)
-  else
-    if (present(r)) then
-      kind_value = selected_real_kind(r=r)
-    else
-      if (present(p)) then
-        kind_value = selected_real_kind(p)
-      endif
-    endif
-  endif
-end subroutine real_kind
-
-subroutine int_kind(p, r, kind_value)
-  integer, intent(in), optional :: p, r
-  integer, intent(out) :: kind_value
-
-  if(present(p).and.present(r)) then
-    kind_value = selected_int_kind(p)
-  else
-    if (present(r)) then
-      kind_value = selected_int_kind(r=r)
-    else
-      if (present(p)) then
-        kind_value = selected_int_kind(p)
-      endif
-    endif
-  endif
-end subroutine int_kind
-
-end module kind
+#NB The kind values used to be obtained by building a small Fortran module
+#NB (FCODE) through numpy.f2py.compile and importing it. That function was
+#NB deprecated in NumPy 1.26 and removed in 2.0, so the same values are now
+#NB obtained by compiling and running a standalone probe program directly
+#NB with the Fortran compiler. No f2py involvement is needed for this.
+KIND_PROBE_FCODE = """program kind_probe
+  print '(I0)', {expression}
+end program kind_probe
 """
+
+#NB f2py/distutils compiler names mapped onto the actual executable, needed
+#NB now that the compiler is invoked directly rather than through distutils.
+FCOMPILER_EXECUTABLES = {
+    'gnu95': 'gfortran',
+    'gfortran': 'gfortran',
+    'intel': 'ifort',
+    'intelem': 'ifort',
+    'ifort': 'ifort',
+}
+
+
+def fcompiler_executable(fcompiler=None):
+    """Return the Fortran compiler executable to invoke directly."""
+    if fcompiler is None:
+        fcompiler = os.environ.get('F2PY_FCOMPILER', 'gfortran')
+    return FCOMPILER_EXECUTABLES.get(fcompiler, fcompiler)
+
+
+_KIND_CACHE = {}
+
+
+def evaluate_fortran_kind(kind_type, args, kwargs):
+    """Evaluate selected_real_kind/selected_int_kind by compiling and running
+    a one-line Fortran program with the same compiler that builds the model.
+
+    The argument handling reproduces the old FCODE module exactly, including
+    its quirk that selected_int_kind ignores r whenever p is given.
+
+    """
+    import subprocess
+    import tempfile
+
+    p = kwargs.get('p')
+    r = kwargs.get('r')
+    #NB positional arguments were passed to the FCODE wrappers as (p, r)
+    if len(args) > 0 and p is None:
+        p = args[0]
+    if len(args) > 1 and r is None:
+        r = args[1]
+
+    if kind_type == 'real':
+        if p is not None and r is not None:
+            expression = 'selected_real_kind(p=%s, r=%s)' % (p, r)
+        elif r is not None:
+            expression = 'selected_real_kind(r=%s)' % r
+        else:
+            expression = 'selected_real_kind(%s)' % p
+    else:
+        if p is not None:
+            expression = 'selected_int_kind(%s)' % p
+        else:
+            expression = 'selected_int_kind(r=%s)' % r
+
+    if expression in _KIND_CACHE:
+        return _KIND_CACHE[expression]
+
+    compiler = fcompiler_executable()
+    tmpdir = tempfile.mkdtemp()
+    try:
+        source = os.path.join(tmpdir, 'kind_probe.f90')
+        binary = os.path.join(tmpdir, 'kind_probe')
+        with open(source, 'w') as outfile:
+            outfile.write(KIND_PROBE_FCODE.format(expression=expression))
+        try:
+            subprocess.check_call([compiler, '-o', binary, source])
+            output = subprocess.check_output([binary])
+        except (OSError, subprocess.CalledProcessError) as e:
+            raise Exception('Could not evaluate %s using %s\n%s'
+                            % (expression, compiler, e))
+        kind_value = int(output.strip())
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+    _KIND_CACHE[expression] = kind_value
+    return kind_value
 
 
 class CorrectlyNamed:
@@ -232,10 +280,6 @@ def evaluate_kind_values(infile, outfile):
 
     """
     import re
-    import os
-    import sys
-    import shutil
-    sys.path.append(os.path.abspath(os.curdir))
 
     with open(infile) as infh:
         intext = infh.read()
@@ -243,50 +287,6 @@ def evaluate_kind_values(infile, outfile):
             or 'selected_real_kind' in intext.lower()):
         shutil.copy(infile, outfile)
         return
-
-    def import_selected_kind():
-        """Tries to import the module which provides
-        processor dependent kind values. If the module
-        is not available it is compiled from a here-document
-        and imported afterwards.
-
-        Warning: creates both the source file and the
-        compiled module in the current directory.
-
-        """
-        try:
-            import f2py_selected_kind
-        except:
-            from numpy.f2py import compile
-            # quick'n'dirty workaround for windoze
-            if os.name == 'nt':
-                f = open('f2py_selected_kind.f90', 'w')
-                f.write(FCODE)
-                f.close()
-                from copy import deepcopy
-                # save for later
-                true_argv = deepcopy(sys.argv)
-                sys.argv = (('%s -c --fcompiler=gnu95 --compiler=mingw32'
-                             ' -m f2py_selected_kind'
-                             ' f2py_selected_kind.f90')
-                            % sys.executable).split()
-                from numpy import f2py as f2py2e
-                f2py2e.main()
-
-                sys.argv = true_argv
-            else:
-                fcompiler = os.environ.get('F2PY_FCOMPILER', 'gfortran')
-                compile(FCODE, source_fn='f2py_selected_kind.f90',
-                        modulename='f2py_selected_kind',
-                        extra_args='--fcompiler=%s' % fcompiler)
-            try:
-                import f2py_selected_kind
-            except Exception as e:
-                raise Exception('Could not create selected_kind module\n'
-                                + '%s\n' % os.path.abspath(os.curdir)
-                                + '%s\n' % os.listdir('.')
-                                + '%s\n' % e)
-        return f2py_selected_kind.kind
 
     def parse_args(args):
         """
@@ -312,14 +312,14 @@ def evaluate_kind_values(infile, outfile):
         function.
         """
         args, kwargs = parse_args(args)
-        return import_selected_kind().int_kind(*args, **kwargs)
+        return evaluate_fortran_kind('int', args, kwargs)
 
     def real_kind(args):
         """Python wrapper around Fortran selected_real_kind
         function.
         """
         args, kwargs = parse_args(args)
-        return import_selected_kind().real_kind(*args, **kwargs)
+        return evaluate_fortran_kind('real', args, kwargs)
 
     infile = open(infile)
     outfile = open(outfile, 'w')
@@ -380,9 +380,13 @@ def build(options):
 
     extra_flags = {}
 
+    #NB -fimplicit-none was dropped from the gfortran flags: it is applied to
+    #NB f2py's own generated wrapper (kmc_model-f2pywrappers2.f90) as well,
+    #NB which relies on implicit typing for character-returning functions such
+    #NB as get_system_name and therefore fails to compile with it.
     if options.no_optimize:
         extra_flags['gfortran'] = ('-ffree-line-length-none -ffree-form' #-ffixed-line-length-none is not used as it seems to be not needed as of Nov 20th, 2022
-                                   ' -xf95-cpp-input -Wall -fimplicit-none'
+                                   ' -xf95-cpp-input -Wall'
                                    ' -time  -fmax-identifier-length=63 ')
         extra_flags['gnu95'] = extra_flags['gfortran']
         extra_flags['intel'] = '-fpp -Wall -I/opt/intel/fc/10.1.018/lib'
@@ -390,7 +394,7 @@ def build(options):
 
     else:
         extra_flags['gfortran'] = ('-ffree-line-length-none -ffree-form' #-ffixed-line-length-none is not used as it seems to be not needed as of Nov 20th, 2022
-                                   ' -xf95-cpp-input -Wall -O3 -fimplicit-none'
+                                   ' -xf95-cpp-input -Wall -O3'
                                    ' -time -fmax-identifier-length=63 ')
         extra_flags['gnu95'] = extra_flags['gfortran']
         extra_flags['intel'] = '-fast -fpp -Wall -I/opt/intel/fc/10.1.018/lib'
@@ -418,15 +422,34 @@ def build(options):
     call = []
     call.append('-c')
     call.append('-c')
-    call.append('--fcompiler=%s' % options.fcompiler)
     if os.name == 'nt':
         call.append('%s' % ccompiler)
     extra_flags = extra_flags.get(options.fcompiler, '')
 
     if options.debug:
         extra_flags += ' -DDEBUG'
-    #NB presence of " around f90flags argument confuses f2py.  
-    #NB Command line argument separation already set by 
+
+    #NB The meson backend (the only one f2py offers on Python >= 3.12) builds
+    #NB out of tree and copies the sources into a temporary directory, so
+    #NB base.f90's #include "assert.ppc" no longer resolves next to the source
+    #NB and the include files have to be put on the include path explicitly.
+    #NB They are copied into a temporary directory rather than pointing -I at
+    #NB the source directory because f2py splits --f90flags on whitespace
+    #NB (numpy/f2py/_backends/_meson.py), and the source path contains spaces
+    #NB whenever the model name does.
+    import tempfile
+    include_dir = tempfile.mkdtemp()
+    for include_file in glob('*.ppc'):
+        shutil.copy(include_file, include_dir)
+    extra_flags += ' -I%s' % include_dir
+
+    #NB --fcompiler is a distutils-backend option and is not understood by the
+    #NB meson backend. The compiler is selected through the FC environment
+    #NB variable instead, which meson honours.
+    os.environ.setdefault('FC', fcompiler_executable(options.fcompiler))
+
+    #NB presence of " around f90flags argument confuses f2py.
+    #NB Command line argument separation already set by
     #NB split into separate str items in list. Not
     #NB sure why it ever worked.
     #NB call.append('--f90flags="%s"' % extra_flags)
@@ -441,17 +464,18 @@ def build(options):
     from numpy import f2py
     sys.argv = call
     try:
-        f2py.main()  # Doesn't work according to Alberdi, but works in Erwin's.
-    except:
-        from subprocess import call
-        #'python3' is assumed to be the default command, but it could be 'python'. So we use "sys.executable" to avoid getting the wrong one.
-        command = [sys.executable, '-m', 'numpy.f2py', '--fcompiler=' + options.fcompiler, '--f90flags=' + extra_flags, '-m',
-                   module_name, '-c'] + src_files
-        print(' '.join(command))
-        call(command)
-
-            
-    sys.argv = true_argv
+        try:
+            f2py.main()  # Doesn't work according to Alberdi, but works in Erwin's.
+        except:
+            from subprocess import call
+            #'python3' is assumed to be the default command, but it could be 'python'. So we use "sys.executable" to avoid getting the wrong one.
+            command = [sys.executable, '-m', 'numpy.f2py', '--f90flags=' + extra_flags, '-m',
+                       module_name, '-c'] + src_files
+            print(' '.join(command))
+            call(command)
+    finally:
+        shutil.rmtree(include_dir, ignore_errors=True)
+        sys.argv = true_argv
 
 
 def T_grid(T_min, T_max, n):
@@ -560,7 +584,11 @@ def evaluate_template(template, escape_python=False, **kwargs):
         #@ Hello World {i}
 
     """
-    locals().update(kwargs)
+    #NB kwargs (e.g. self, data, options) used to be injected via
+    #NB locals().update(kwargs), which relied on CPython <= 3.12 returning the
+    #NB frame's cached f_locals. PEP 667 (3.13) makes locals() an independent
+    #NB snapshot, so the kwargs are merged into the exec namespace explicitly
+    #NB below instead. Real locals take precedence, as they did before.
 
     result = ''
     NEWLINE = '\n'
@@ -585,7 +613,7 @@ def evaluate_template(template, escape_python=False, **kwargs):
         #NB create local dict and copy back "result" explicitly
         #NB if any other local variables are modified, that change
         #NB will be lost.
-        ldict = locals().copy()
+        ldict = {**kwargs, **locals()}
         exec(python_lines, globals(), ldict)
         result = ldict['result']
 
@@ -605,7 +633,7 @@ def evaluate_template(template, escape_python=False, **kwargs):
                     % (' ' * (len(line.expandtabs(4)) - len(line.lstrip())),  line.lstrip())
 
         #NB see note above
-        ldict = locals().copy()
+        ldict = {**kwargs, **locals()}
         exec(python_lines, globals(), ldict)
         result = ldict['result'] 
 
@@ -625,7 +653,7 @@ def evaluate_template(template, escape_python=False, **kwargs):
         if not matched:
             return template
         #NB see note above
-        ldict = locals().copy()
+        ldict = {**kwargs, **locals()}
         exec(python_lines, globals(), ldict)
         result = ldict['result']
 
@@ -644,7 +672,7 @@ def evaluate_template(template, escape_python=False, **kwargs):
                 python_lines += line
 
         #NB see note above
-        ldict = locals().copy()
+        ldict = {**kwargs, **locals()}
         exec(python_lines, globals(), ldict) 
         result = ldict['result']
 

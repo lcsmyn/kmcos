@@ -119,7 +119,7 @@ try:
     xrange
 except NameError:
     xrange = range
-    
+
 INTERACTIVE = hasattr(sys, 'ps1') or hasattr(sys, 'ipcompleter')
 INTERACTIVE = True  # Turn it off for now because it doesn work reliably
 
@@ -447,7 +447,7 @@ class KMC_Model(Process):
         return ' '.join(param_name
                        for param_name in sorted(self.settings.parameters)
             if self.settings.parameters[param_name].get('adjustable', False))
-    
+
     def get_param_value(self,param):
         """Return the evaluated value of a parameter"""
         return evaluate_param_expression(param, settings.parameters)
@@ -473,7 +473,7 @@ class KMC_Model(Process):
                     tofs.append(name)
         tofs.sort()
         return ' '.join(tofs)
-        
+
     def deallocate(self):
         """Deallocate all arrays that are allocated
         by the Fortran module. This needs to be called
@@ -501,11 +501,11 @@ class KMC_Model(Process):
             print("Model is not allocated.")
         if base_acf is not None :
             base_acf.deallocate_acf()
-            
+
     def set_buffer_parameter(self, value=1000):
         """
         :param value: The value of the buffer parameter
-        determines how many times faster equilibrated reaction 
+        determines how many times faster equilibrated reaction
         steps will be than the non-equilibrated steps after
         scaling.
         It could also be called the target timescale disparity.
@@ -526,7 +526,7 @@ class KMC_Model(Process):
     def set_threshold_parameter(self, value=0.2):
         """
         :param value: A pair of processes are flagged as
-        equilibrated if within the last `execution_steps` 
+        equilibrated if within the last `execution_steps`
         the absolute value of the number of forward minus
         reverse executions divided by `execution_steps` is
         less than the threshold parameter.
@@ -546,7 +546,7 @@ class KMC_Model(Process):
 
     def set_sampling_steps(self, value=1000):
         """
-        :param value: The number of steps to sample 
+        :param value: The number of steps to sample
         before scaling the rate constants of equilibrated
         processes.
         Note that everytime a non-equilibrated process is
@@ -571,7 +571,7 @@ class KMC_Model(Process):
         equilibrium of a process. See also `threshold_parameter`.
         This is also the number of steps of either the forward
         or the reverse reaction that must have been executed
-        within the current superbasin in order for the scaling 
+        within the current superbasin in order for the scaling
         of the rate constant to be carried out.
         Note that changing this parameter will lead to the model
         being reset.
@@ -627,8 +627,8 @@ class KMC_Model(Process):
                         print('%s / %s: %.4e' % (f_name, r_name, f))
 
     def print_scaling_stats(self):
-        """Print the average used and last set (=0 if never set) value of the 
-        scaling factor for each process pair in the temporal acceleration 
+        """Print the average used and last set (=0 if never set) value of the
+        scaling factor for each process pair in the temporal acceleration
         scheme.
         """
         assert (self.can_accelerate), 'This model has not been compiled using the acceleration flag -t'
@@ -644,8 +644,8 @@ class KMC_Model(Process):
 
     def get_scaling_stats(self):
         """Returns the names of the process pairs that the scaling factors refer to, the
-        average used value of the scaling factor, and the last set (=0 if never set) 
-        value of the scaling factor for each process pair in the temporal acceleration 
+        average used value of the scaling factor, and the last set (=0 if never set)
+        value of the scaling factor for each process pair in the temporal acceleration
         scheme.
         """
         assert (self.can_accelerate), 'This model has not been compiled using the acceleration flag -t'
@@ -667,7 +667,7 @@ class KMC_Model(Process):
 
     def print_proc_pair_eq(self):
         """Prints the names of the forward and reverse process in each pair
-        along with a logical for the pair that is True if the process pair 
+        along with a logical for the pair that is True if the process pair
         is equilibrated and False if the process pair is non-equilibrated.
         """
         assert (self.can_accelerate), 'This model has not been compiled using the acceleration flag -t'
@@ -698,9 +698,9 @@ class KMC_Model(Process):
 
     def set_debug_level(self, value=0):
         """
-        Set the debug level in the acceleration scheme. If a value larger than 0 is set, 
-        certain variables in base.f90 will be printed. For a value of 1 variables will 
-        be printed every time reactions are scaled or unscaled. For a value of 2 
+        Set the debug level in the acceleration scheme. If a value larger than 0 is set,
+        certain variables in base.f90 will be printed. For a value of 1 variables will
+        be printed every time reactions are scaled or unscaled. For a value of 2
         variables will be printed for every accelerated kmc step.
         Possible values: 0, 1, 2
         """
@@ -734,7 +734,7 @@ class KMC_Model(Process):
 
         :param t: Length of time (s) to run (Default: 1)
         :type t: real
-        
+
         :param n: Upper limit for number of steps to run (Default: 10000)
         :type n: int
         Returns the number of iterations executed.
@@ -745,22 +745,22 @@ class KMC_Model(Process):
     def do_acc_steps(self, n=10000, stats=True, save_exe=False, save_proc=0):
         """Propagate the model `n` steps using the temporal
         acceleration scheme.
-        
+
         :param n: Number of steps to run (Default: 10000)
         :type n: int
-        
+
         :param stats: Calculate statistics for the scaling factors
         :type stats: logical
-        
+
         :param save_exe: Track 'save_limit' number of  executions following the execution of the target process 'save_proc'
         :type save_exe: logical
-        
+
         :param save_proc: Process to be tracked
         :type save_proc: integer
         """
         assert (self.can_accelerate), 'This model has not been compiled using the acceleration flag -t'
         proclist.do_acc_kmc_steps(n, self.settings.sampling_steps, stats, save_exe, save_proc)
-    
+
 
     def run(self):
         """Runs the model indefinitely. To control the
@@ -824,7 +824,7 @@ class KMC_Model(Process):
                     settings.parameters.update(parameters)
                 set_rate_constants(parameters, self.print_rates, self.can_accelerate)
 
-    
+
     def play_ascii_movie(self,frames=30,steps=1,site=0,delay=0.1,species=None,hexagonal=False):
         """Shows a series of model snapshots in the current terminal.
             'frames' sets the total video length
@@ -855,7 +855,7 @@ class KMC_Model(Process):
                 lineshift = ''
             print(lineshift,*thisRow)
         sys.stdout.flush()
-    
+
     def export_movie(self, filename = "", directory = "./exported_movies", resolution = 150, scale = 20, fps=1, frames = 30, steps = 1e6, representation= 'atomic', stitch=True):
         """Exports a series of atomic view snapshots of model instance to a subdirectory, creating png files
         in the exported_movie_images directory and then creates a .webm video file of all the images
@@ -869,7 +869,7 @@ class KMC_Model(Process):
         """
 
         import os
-        
+
         representation = str(representation).lower() #make the representation lowercase for standardization purposes.
         if filename == '':
             filename = 'atoms_image'
@@ -898,15 +898,15 @@ class KMC_Model(Process):
                 else:
                     legendExport = False
                 self.plot_configuration(directory=image_folder,plot_settings={'figure_name':str(filename)+str(i).zfill(int(digitsLength)),'legendExport':legendExport})
-            
-            
+
+
         #os.chdir("..")
         if stitch == True:
                 if os.path.exists(directory): #remove the directory if it exists and make it fresh, becuase otherwise moviepy might have errors.
                     import shutil
                     shutil.rmtree(directory)
                 os.mkdir(directory)
-                    
+
                 try:
                     import moviepy.video.io.ImageSequenceClip
                     image_files = [os.path.join(image_folder,img) for img in os.listdir(image_folder) if img.endswith(".png")]
@@ -1456,7 +1456,7 @@ class KMC_Model(Process):
             print(res)
         else:
             return res
-            
+
     def get_global_configuration(self, filename_csv="", directory = "./exported_configurations", export_csv=True, matrix_format = "cartesian"):
         """Gets each species and their respective coordinates and returns a 3d list that separates the coordinates of each species and EITHER returns a dictionary of the species's name OR returns a meshgrid of all the species
 
@@ -1487,7 +1487,7 @@ class KMC_Model(Process):
 
                 Note 1: For this case, "0" is empty and "1" is CO. In general, the meshgrid can have higher numbers representing more than 2 species if htere are
                 enough spaces in the model.
-                
+
                 Note 2: The return value for get_global_configuration() and get_species_coordinates() have the same return values when setting matrix_format = 'meshgrid'
 
         """
@@ -1498,15 +1498,15 @@ class KMC_Model(Process):
                 filename_csv = "species_coords" + "_" + str(self.base.get_kmc_step()) + ".csv"
             else:
                 if filename_csv[-4:] == ".csv":
-                    filename_csv.replace(".csv", "") + "_" + str(self.base.get_kmc_step()) + ".csv" 
+                    filename_csv.replace(".csv", "") + "_" + str(self.base.get_kmc_step()) + ".csv"
                 else:
                     filename_csv = filename_csv + "_" + str(self.base.get_kmc_step()) + ".csv"
         filename_csv = directory + "/" + filename_csv
-        
+
         species = self.species_tags
         species_list = list(species)
         coords_list = []
-        
+
         if matrix_format == "cartesian":
             config = self._get_configuration().tolist()
             #Note: taking a list of a dictionary turns the keys into a list
@@ -1530,11 +1530,11 @@ class KMC_Model(Process):
             if export_csv == True:
                 check_directory(directory)
                 np.savetxt(filename_csv, np.array(final_coords, dtype = "object"), delimiter = ",", fmt="%s") #we use dtype to avoid a np warning
-        
+
         return final_coords  #to do: need to sort and export as a dataframe with the species name, x, and y values of the coordiantes in their own column
                                 #put the module "ColumnSort" in the directory and call later for sorting
-             
-             
+
+
     def get_species_coordinates(self, filename_csv = "", directory = "./exported_configurations", export_csv=True, matrix_format = "cartesian"):
         """Gets the species coordinates from config and EITHER returns a 3d array, where each sub array lists the coordinates for a single species on the surface OR returns a meshgrid of all the species
 
@@ -1542,10 +1542,10 @@ class KMC_Model(Process):
 
         'directory' sets the directory name where the .csv file is saved if 'export_csv' is true
 
-        'matrix_format' has two types of options: meshgrid and cartesian. Cartesian return as a csv where each row 
+        'matrix_format' has two types of options: meshgrid and cartesian. Cartesian return as a csv where each row
         represents the coordinates for a single species, and the meshgrid format returns as a csv with a XX, YY format
             EX: Cartesian
-            Ex: [[0 10 0] [0 11 0] [0 18 0] [1 6 0] [2 3 0] [2 11 0] [2 13 0]] -> This is CO positions in [x y z] 
+            Ex: [[0 10 0] [0 11 0] [0 18 0] [1 6 0] [2 3 0] [2 11 0] [2 13 0]] -> This is CO positions in [x y z]
                 [[0 0 0]  [0 1 0]  [0 2 0]  [0 3 0] [0 4 0] [0 5 0]  [0 6 0]]  -> This is empty site positions in [x y z]
 
             EX: Meshgrid
@@ -1555,15 +1555,15 @@ class KMC_Model(Process):
             [1, 1, 0, 0, 1, 0],
             [1, 0, 1, 1, 1, 0],
             [1, 0, 1, 0, 1, 0]]
-            
+
                 Note 1: For this case, "0" is empty and "1" is CO. In general, the meshgrid can have higher numbers representing more than 2 species if there are
                 enough spaces in the model.
-                
+
                 Note 2: The return value for get_global_configuration() and get_species_coordinates() have the same return values when setting matrix_format = 'meshgrid'
 
         """
         config = self._get_configuration()
-        species = self.species_tags   
+        species = self.species_tags
 
         if matrix_format == "cartesian":
             site_positions = self.lattice.site_positions
@@ -1607,7 +1607,7 @@ class KMC_Model(Process):
     def get_local_configurations(self, configurationArray, radius = 2, filename ="", directory = "./exported_configurations", export_files=True, unique_only=True, delimiter="|"):
         """Takes in a meshgrid or _config object (from _get_configuration) and returns either the list of either all possible smaller meshgrids (i.e. the local configurations), or only the unique local configurations
         Currently, get_local_configurations is only compatible with 2D configurations.
-        
+
         'meshgrid' is a matrix with all the species
             EX: Meshgrid
                 [[0, 1, 1, 0, 1, 0],
@@ -1635,23 +1635,23 @@ class KMC_Model(Process):
         Example of the function's return value
             EX:
             [[[0, 1, 1,],
-            [1, 0, 1,],  
+            [1, 0, 1,],
             [0, 0, 1,]],
 
             [[0, 1, 1,],
-            [1, 1, 1,],   
+            [1, 1, 1,],
             [0, 1, 1,]],
 
             [[1, 1, 1,],
-            [1, 0, 0,],   
+            [1, 0, 0,],
             [0, 1, 1,]]]
-        
-        Note that if a config object is passed in, rather than a meshgrid, then each element is a list rather than an integer. 
-        For example, the first row might be [[  [0,1,0], [1,1,0] .... ],  
+
+        Note that if a config object is passed in, rather than a meshgrid, then each element is a list rather than an integer.
+        For example, the first row might be [[  [0,1,0], [1,1,0] .... ],
         However, the function will still work. So one can use  model._get_configuration() and pass the output of that into get_local_configurations.
         A config object from model._get_configuration() should not be confused with a global configuration from model.get_global_configuration(),
         they are two representations of the global configuration but are very different in format.
-        
+
         #TODO: We should  have an optional argument for the
         configurationArrayFormat which can be "meshgrid" versus "_config" since _config is really an internal format. Then we can use the flag and the "try and except" will be a last resort in an else statement.
         """
@@ -1683,10 +1683,10 @@ class KMC_Model(Process):
                     keepTile = False
                 if keepTile == True:
                     tileList.append(initialMeshgrid[rowIndex-radius:rowIndex+radius+1,columnIndex-radius:columnIndex+radius+1])
-        
+
         if unique_only == True:
             tileList = np.unique(tileList, axis=0)
-            
+
         if export_files == True:
             check_directory(directory)
             if filename == "":
@@ -1707,7 +1707,7 @@ class KMC_Model(Process):
                     try: #The try is because a meshgrid works fine, but when a config object is passed in, then an extra step needs to be taken.
                          #For now, we just detect the need for an extra step using a "try", but it is not a good system.
                         np.savetxt(file, local_configuration, fmt='%-7.2f', delimiter=delimiter) #saves as txt file
-                    except: 
+                    except:
                         def reshapeLocalConfigForExport(localConfigArray):
                             #This is a helpfer function for the case that the local configurations
                             #are obtained from a _get_configuration() call rather than a meshgrid, which returns a config object that is representation of the global configuration.
@@ -1720,11 +1720,11 @@ class KMC_Model(Process):
                             for rowIndex in range(numRows): #This is to go across each row. We use indices because we will need to write.
                                 for columnIndex in range(numColumns): #This is to go across each row's data. We use indices because we will need to write.
                                     newString = str(localConfigArray[rowIndex][columnIndex])[1:-1] #Here is where we remove the extra nesting. The [1:-1] is to remove brackets from the string.
-                                    reshapedArray[rowIndex][columnIndex] = newString 
+                                    reshapedArray[rowIndex][columnIndex] = newString
                             return reshapedArray
                         local_configuration = reshapeLocalConfigForExport(local_configuration)
                         np.savetxt(file, local_configuration, fmt='%s', delimiter = delimiter) #saves as txt file
-                    
+
                     np.save(file=filename + ".npy", arr=tileList) #saves as npy file
 
         return tileList
@@ -1734,7 +1734,7 @@ class KMC_Model(Process):
         """Returns the spatial view of the kmc_model and make a graph named 'plottedConfiguration.png,' unless specified by 'figure_name' in plot_settings
 
         'coords' is expected to be the results from get_species_coordinates(config, species, meshgrid = 'cartesian')
-            Ex: [[0 10 0] [0 11 0] [0 18 0] [1 6 0] [2 3 0] [2 11 0] [2 13 0]] -> This is CO positions in [x y z] 
+            Ex: [[0 10 0] [0 11 0] [0 18 0] [1 6 0] [2 3 0] [2 11 0] [2 13 0]] -> This is CO positions in [x y z]
                 [[0 0 0]  [0 1 0]  [0 2 0]  [0 3 0] [0 4 0] [0 5 0]  [0 6 0]]  -> This is empty site positions in [x y z]
 
         'directory' sets the directory name where the plot is saved
@@ -1751,7 +1751,7 @@ class KMC_Model(Process):
                 "speciesName": False
 
         'dimensionality' is an integer (either 2 or 3 dimensional) for the number of cartesian dimensions.
-        
+
         """
         import matplotlib.pyplot as plt
 
@@ -1779,9 +1779,9 @@ class KMC_Model(Process):
         if 'speciesName' not in plot_settings: plot_settings['speciesName'] = False
         if 'num_x_ticks' not in plot_settings: plot_settings['num_x_ticks'] = 7
         if 'num_y_ticks' not in plot_settings: plot_settings['num_y_ticks'] = 7
-        
+
         fig0, ax0 = plt.subplots()
-        if 'fontdict' in plot_settings: 
+        if 'fontdict' in plot_settings:
             #There are various things that could be added to this fontdict. #https://www.tutorialexample.com/understand-matplotlib-fontdict-a-beginner-guide-matplotlib-tutorial/
             fontdict = plot_settings['fontdict']
             if 'size' in fontdict:
@@ -1791,7 +1791,7 @@ class KMC_Model(Process):
             fontdict = None #initializing with the matplotlib default
         ax0.set_xlabel(plot_settings['x_label'], fontdict=fontdict)
         ax0.set_ylabel(plot_settings['y_label'], fontdict=fontdict) #TODO: THis is not yet generalized (will be a function)
-        
+
         species = self.species_tags
         for (i, key) in zip(list(range(len(coords))), list(species.keys())): #goes through each species and plots their coordinates
             if len(coords[i]) == 0: #in this case, there are no species of the type present, and we make a blank list.
@@ -1804,7 +1804,7 @@ class KMC_Model(Process):
                         ax0.scatter(x,y,label="Species "+str(i+1))
                     else:
                         ax0.scatter(x,y,label=key)
-            
+
             if plot_settings['legend'] == True: #creates the configuration's legend
                 if 'legendLabel' in plot_settings:
                     ax0.legend(title = plot_settings['legendLabel'], bbox_to_anchor=(1.05,1.0), loc="upper left")
@@ -1815,12 +1815,12 @@ class KMC_Model(Process):
             with open(directory + "/" + plot_settings['figure_name'] + "Legend.txt", 'w') as f:
                 for key, value in list(species.items()):
                     f.write('%s\n' % (key))
-                    
+
         if str(plot_settings['num_x_ticks']) != 'auto': #sets the tick locator for the x-axis
             plot_settings['num_x_ticks'] = int(plot_settings['num_x_ticks'])
             from matplotlib.ticker import MaxNLocator
             ax0.xaxis.set_major_locator(MaxNLocator(nbins = plot_settings['num_x_ticks']))
-        
+
         if str(plot_settings['num_y_ticks']) != 'auto': #sets the tick locator for the y-axis
             plot_settings['num_y_ticks'] = int(plot_settings['num_y_ticks'])
             from matplotlib.ticker import MaxNLocator
@@ -1853,8 +1853,8 @@ class KMC_Model(Process):
         """
         atoms = self.get_atoms(reset_time_overrun = False) #here, the self is the KMC_Model object
         kmcos.run.png.MyPNG(atoms, show_unit_cell=False, scale=scale, model=self, **kwargs).write(filename=filename, resolution=resolution)
-        return 
-        
+        return
+
     def plot_configuration(self, filename = '', directory = "./exported_configurations", resolution = 150, scale = 20, representation = 'spatial', plot_settings = {}, showFigure=False, exportFigure= True):
         """Either calls create_configuration_plot() to create the spatial representation of the model, or calls export_picture() to create the atomic representation of the model
 
@@ -1883,7 +1883,7 @@ class KMC_Model(Process):
 
         """
         representation = str(representation).lower() #make the representation lowercase for standardization purposes.
-        check_directory(directory)        
+        check_directory(directory)
         if representation.lower() == 'atomic':
             if 'show_unit_cell' in plot_settings:
                 show_unit_cell = plot_settings['show_unit_cell']
@@ -1897,7 +1897,7 @@ class KMC_Model(Process):
 
         if (representation == 'spatial') or (representation == 'circles'):
             self.create_configuration_plot(directory = directory, plot_settings = plot_settings, showFigure=showFigure, exportFigure= exportFigure)
-            
+
     def _put(self, site, new_species, reduce=False):
         """
         Works exactly like put, but without updating the database of
@@ -1910,7 +1910,7 @@ class KMC_Model(Process):
             model._put([0,0,0,model.lattice.bridge], model.proclist.co)
             # below does the same:
             model._put([0,0,0,"bridge"], "CO")
-            
+
             model._put([1,0,0,model.lattice.bridge], model.proclist.co )
             # below puts a CO molecule at the `bridge` site one to the right
 
@@ -1927,10 +1927,10 @@ class KMC_Model(Process):
         To see all the available site names, use model.settings.site_names, which come from kmc_settings.
             Ex: site_names = ['simple_cubic_hollow']
             set site name as 'model.lattice.simple_cubic_hollow'
-            
+
             Ex: site_names = ['ruo2_bridge']
-            set site name as 'model.lattice.ruo2_bridge' 
-        
+            set site name as 'model.lattice.ruo2_bridge'
+
         To see all the available species names, one can use model.settings.species_tags which comes from kmc_settings.py.
             Ex: species_tags = {
                     "CO":"""""",
@@ -1976,7 +1976,7 @@ class KMC_Model(Process):
         from 0 to the number of unit cells in the respective direction.
         And `n` specifies the site within the unit cell.
 
-        The database of available processes will be updated automatically. 
+        The database of available processes will be updated automatically.
         For doing many put and a single update, see the _put() function.
 
         Examples ::
@@ -1985,11 +1985,11 @@ class KMC_Model(Process):
             model.put([0,0,0,model.lattice.bridge], model.proclist.co)
             # below does the same:
             model.put([0,0,0,"bridge"], "CO")
-            
+
             model.put([1,0,0,model.lattice.bridge], model.proclist.co )
             # below puts a CO molecule at the `bridge` site one to the right
 
-            
+
         :param site: Site where to put the new species, i.e. [x, y, z, bridge]
         :type site: list or np.array
         :param new_species: Name of new species.
@@ -2001,17 +2001,17 @@ class KMC_Model(Process):
         To see all the available site names, use model.settings.site_names, which come from kmc_settings.
             Ex: site_names = ['simple_cubic_hollow']
             set site name as 'model.lattice.simple_cubic_hollow'
-            
+
             Ex: site_names = ['ruo2_bridge']
-            set site name as 'model.lattice.ruo2_bridge' 
-        
+            set site name as 'model.lattice.ruo2_bridge'
+
         To see all the available species names, one can use model.settings.species_tags which comes from kmc_settings.py.
             Ex: species_tags = {
                     "CO":"""""",
                     "O":"""""",
                     "empty":"""""",
                     }
-                    
+
         """
 
         self._put(site, new_species, reduce=reduce)
@@ -2030,7 +2030,7 @@ class KMC_Model(Process):
         config = self._get_configuration()
 
         self.deallocate()
-        self.size /= 2
+        self.size //= 2
         self.reset()
 
         X, Y, Z = self.lattice.system_size
@@ -2070,12 +2070,12 @@ class KMC_Model(Process):
         """
         Returns the next kmc step's process and which site it would occur on, without taking the step.
         The output looks like this::
-        
+
             (Process model.proclist.o2_adsorption_bridge_right (13), Site (10, 19, 0, 1) [#781])
-        
+
         The process name and process number are shown.
-        
-        For the site,the format is the unit cell position in cartesian x,y,z followed by the site type's index (in this example, it is 1). 
+
+        For the site,the format is the unit cell position in cartesian x,y,z followed by the site type's index (in this example, it is 1).
         As noted in the "_put()" function, the site type indexing starts at 1 (not at zero).
         One can use model.settings.site_names to see the site names, which come from kmc_settings.
         So a value of (10, 19, 0, 1) would mean unit cell 10,19,0 with site type model.settings.site_names[0] due to the different indexing.
@@ -3135,7 +3135,7 @@ def set_rate_constants(parameters=None, print_rates=None, can_accelerate=False):
             raise UserWarning(
                 "Could not set %s for process %s!\nException: %s" \
                     % (rate_expr, proc, e))
-        
+
         if can_accelerate:
             try:
                 base.set_original_rate_const(getattr(proclist, proc.lower()),
@@ -3144,7 +3144,7 @@ def set_rate_constants(parameters=None, print_rates=None, can_accelerate=False):
                 raise UserWarning(
                     "Could not set %s for process %s!\nException: %s" \
                         % (rate_expr, proc, e))
-        
+
     if print_rates:
         print('-------------------')
 
