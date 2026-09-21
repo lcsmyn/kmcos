@@ -105,6 +105,7 @@ pt.lattice.cell = np.diag([site_width,
 temp = 298.15
 p_CO2 = 1.0
 p_CO = 0.01
+bias_v = -3.0
 
 pt.add_parameter(name="T", value=temp, adjustable=True, min=100, max=700)
 pt.add_parameter(name="p_CO2", value=p_CO2, adjustable=True, min=1e-10, max=1.0e2)
@@ -127,6 +128,8 @@ pt.add_parameter(name="CO_diffuse", value=1, adjustable=True, min=1e-10, max=1e1
 
 pt.add_parameter(name="OH_diffuse", value=1, adjustable=True, min=1e-10, max=1e10)
 pt.add_parameter(name="CO3_diffuse", value=1, adjustable=True, min=1e-10, max=1e10)
+
+pt.add_parameter(name="bias_v", value=bias_v, adjustable=True, min=-10, max=10)
 
 
 DIFFUSION_CO2 = 1.92e-9 # m^2 / s at 298 K in water, according to Wikipedia
@@ -194,8 +197,8 @@ for z in range(1, NUM_ELECTROLYTE_SITES+1):
         "CO2", 0, z,
         forward_rate="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve",
         reverse_rate="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve",
-        forward_name=f"water_adsorb_CO2_{z}",
-        reverse_name=f"water_desorb_CO2_{z}",
+        forward_name=f"water_desorb_CO2_{z}",
+        reverse_name=f"water_adsorb_CO2_{z}",
     )
 
     # same for CO
@@ -342,10 +345,12 @@ for y in range(1, NUM_CATALYST_SITES):
     # Also, CO is no longer in the picture because we don't know how it enters and exits
     # the electrolyte. So it is just gone from the simulation for now.
 
+    # we have also implemented the change in reduction rate constant based on the bias voltage (-3 V by default).
+
     pt.parse_and_add_process(
         f"reduction_{y}; \
           CO2@{active_site} -> OH@{oh_site_1} + OH@{oh_site_2}; \
-          {PREFACTOR}*exp(-Ea_CO2_reduce*eV*beta)*reduce"
+          {PREFACTOR}*exp(-(Ea_CO2_reduce+0.5*bias_v)*eV*beta)*reduce"
     )
 
     # the reverse process is needed for temporal acceleration, but it doesn't actually exist.

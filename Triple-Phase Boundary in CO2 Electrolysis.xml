@@ -9444,85 +9444,85 @@
             <action species="CO2" coord_layer="tpb_line" coord_name="0_9_boundary" coord_offset="0 0 0"/>
             <action species="empty" coord_layer="tpb_line" coord_name="1_9_bulk" coord_offset="0 0 0"/>
         </process>
-        <process rate_constant="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve" name="water_adsorb_CO2_1" enabled="True">
-            <condition species="CO2" coord_layer="tpb_line" coord_name="0_1_boundary" coord_offset="0 0 0"/>
-            <action species="empty" coord_layer="tpb_line" coord_name="0_1_boundary" coord_offset="0 0 0"/>
-        </process>
-        <process rate_constant="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve" name="water_adsorb_CO2_10" enabled="True">
-            <condition species="CO2" coord_layer="tpb_line" coord_name="0_10_boundary" coord_offset="0 0 0"/>
-            <action species="empty" coord_layer="tpb_line" coord_name="0_10_boundary" coord_offset="0 0 0"/>
-        </process>
-        <process rate_constant="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve" name="water_adsorb_CO2_2" enabled="True">
-            <condition species="CO2" coord_layer="tpb_line" coord_name="0_2_boundary" coord_offset="0 0 0"/>
-            <action species="empty" coord_layer="tpb_line" coord_name="0_2_boundary" coord_offset="0 0 0"/>
-        </process>
-        <process rate_constant="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve" name="water_adsorb_CO2_3" enabled="True">
-            <condition species="CO2" coord_layer="tpb_line" coord_name="0_3_boundary" coord_offset="0 0 0"/>
-            <action species="empty" coord_layer="tpb_line" coord_name="0_3_boundary" coord_offset="0 0 0"/>
-        </process>
-        <process rate_constant="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve" name="water_adsorb_CO2_4" enabled="True">
-            <condition species="CO2" coord_layer="tpb_line" coord_name="0_4_boundary" coord_offset="0 0 0"/>
-            <action species="empty" coord_layer="tpb_line" coord_name="0_4_boundary" coord_offset="0 0 0"/>
-        </process>
-        <process rate_constant="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve" name="water_adsorb_CO2_5" enabled="True">
-            <condition species="CO2" coord_layer="tpb_line" coord_name="0_5_boundary" coord_offset="0 0 0"/>
-            <action species="empty" coord_layer="tpb_line" coord_name="0_5_boundary" coord_offset="0 0 0"/>
-        </process>
-        <process rate_constant="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve" name="water_adsorb_CO2_6" enabled="True">
-            <condition species="CO2" coord_layer="tpb_line" coord_name="0_6_boundary" coord_offset="0 0 0"/>
-            <action species="empty" coord_layer="tpb_line" coord_name="0_6_boundary" coord_offset="0 0 0"/>
-        </process>
-        <process rate_constant="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve" name="water_adsorb_CO2_7" enabled="True">
-            <condition species="CO2" coord_layer="tpb_line" coord_name="0_7_boundary" coord_offset="0 0 0"/>
-            <action species="empty" coord_layer="tpb_line" coord_name="0_7_boundary" coord_offset="0 0 0"/>
-        </process>
-        <process rate_constant="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve" name="water_adsorb_CO2_8" enabled="True">
-            <condition species="CO2" coord_layer="tpb_line" coord_name="0_8_boundary" coord_offset="0 0 0"/>
-            <action species="empty" coord_layer="tpb_line" coord_name="0_8_boundary" coord_offset="0 0 0"/>
-        </process>
-        <process rate_constant="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve" name="water_adsorb_CO2_9" enabled="True">
-            <condition species="CO2" coord_layer="tpb_line" coord_name="0_9_boundary" coord_offset="0 0 0"/>
-            <action species="empty" coord_layer="tpb_line" coord_name="0_9_boundary" coord_offset="0 0 0"/>
-        </process>
-        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve" name="water_desorb_CO2_1" enabled="True">
+        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve" name="water_adsorb_CO2_1" enabled="True">
             <condition species="empty" coord_layer="tpb_line" coord_name="0_1_boundary" coord_offset="0 0 0"/>
             <action species="CO2" coord_layer="tpb_line" coord_name="0_1_boundary" coord_offset="0 0 0"/>
         </process>
-        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve" name="water_desorb_CO2_10" enabled="True">
+        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve" name="water_adsorb_CO2_10" enabled="True">
             <condition species="empty" coord_layer="tpb_line" coord_name="0_10_boundary" coord_offset="0 0 0"/>
             <action species="CO2" coord_layer="tpb_line" coord_name="0_10_boundary" coord_offset="0 0 0"/>
         </process>
-        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve" name="water_desorb_CO2_2" enabled="True">
+        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve" name="water_adsorb_CO2_2" enabled="True">
             <condition species="empty" coord_layer="tpb_line" coord_name="0_2_boundary" coord_offset="0 0 0"/>
             <action species="CO2" coord_layer="tpb_line" coord_name="0_2_boundary" coord_offset="0 0 0"/>
         </process>
-        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve" name="water_desorb_CO2_3" enabled="True">
+        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve" name="water_adsorb_CO2_3" enabled="True">
             <condition species="empty" coord_layer="tpb_line" coord_name="0_3_boundary" coord_offset="0 0 0"/>
             <action species="CO2" coord_layer="tpb_line" coord_name="0_3_boundary" coord_offset="0 0 0"/>
         </process>
-        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve" name="water_desorb_CO2_4" enabled="True">
+        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve" name="water_adsorb_CO2_4" enabled="True">
             <condition species="empty" coord_layer="tpb_line" coord_name="0_4_boundary" coord_offset="0 0 0"/>
             <action species="CO2" coord_layer="tpb_line" coord_name="0_4_boundary" coord_offset="0 0 0"/>
         </process>
-        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve" name="water_desorb_CO2_5" enabled="True">
+        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve" name="water_adsorb_CO2_5" enabled="True">
             <condition species="empty" coord_layer="tpb_line" coord_name="0_5_boundary" coord_offset="0 0 0"/>
             <action species="CO2" coord_layer="tpb_line" coord_name="0_5_boundary" coord_offset="0 0 0"/>
         </process>
-        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve" name="water_desorb_CO2_6" enabled="True">
+        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve" name="water_adsorb_CO2_6" enabled="True">
             <condition species="empty" coord_layer="tpb_line" coord_name="0_6_boundary" coord_offset="0 0 0"/>
             <action species="CO2" coord_layer="tpb_line" coord_name="0_6_boundary" coord_offset="0 0 0"/>
         </process>
-        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve" name="water_desorb_CO2_7" enabled="True">
+        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve" name="water_adsorb_CO2_7" enabled="True">
             <condition species="empty" coord_layer="tpb_line" coord_name="0_7_boundary" coord_offset="0 0 0"/>
             <action species="CO2" coord_layer="tpb_line" coord_name="0_7_boundary" coord_offset="0 0 0"/>
         </process>
-        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve" name="water_desorb_CO2_8" enabled="True">
+        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve" name="water_adsorb_CO2_8" enabled="True">
             <condition species="empty" coord_layer="tpb_line" coord_name="0_8_boundary" coord_offset="0 0 0"/>
             <action species="CO2" coord_layer="tpb_line" coord_name="0_8_boundary" coord_offset="0 0 0"/>
         </process>
-        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve" name="water_desorb_CO2_9" enabled="True">
+        <process rate_constant="p_CO2*bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_adsorb*eV*beta)*CO2_dissolve" name="water_adsorb_CO2_9" enabled="True">
             <condition species="empty" coord_layer="tpb_line" coord_name="0_9_boundary" coord_offset="0 0 0"/>
             <action species="CO2" coord_layer="tpb_line" coord_name="0_9_boundary" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve" name="water_desorb_CO2_1" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="0_1_boundary" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="0_1_boundary" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve" name="water_desorb_CO2_10" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="0_10_boundary" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="0_10_boundary" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve" name="water_desorb_CO2_2" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="0_2_boundary" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="0_2_boundary" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve" name="water_desorb_CO2_3" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="0_3_boundary" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="0_3_boundary" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve" name="water_desorb_CO2_4" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="0_4_boundary" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="0_4_boundary" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve" name="water_desorb_CO2_5" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="0_5_boundary" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="0_5_boundary" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve" name="water_desorb_CO2_6" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="0_6_boundary" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="0_6_boundary" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve" name="water_desorb_CO2_7" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="0_7_boundary" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="0_7_boundary" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve" name="water_desorb_CO2_8" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="0_8_boundary" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="0_8_boundary" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="bar*A/sqrt(2*pi*umass*m_CO2/beta)*exp(-Ga_CO2_water_desorb*eV*beta)*CO2_dissolve" name="water_desorb_CO2_9" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="0_9_boundary" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="0_9_boundary" coord_offset="0 0 0"/>
         </process>
     </process_list>
     <output_list/>
