@@ -374,6 +374,10 @@ def build(options):
     src_files.extend(glob('nli_*.f90'))
     # src_files.extend(glob('get_rate_*.f90'))
     src_files.extend(glob('run_proc_*.f90'))
+    #NB the local_smart put/take/touchup routines are split over
+    #NB proclist_pt_*.f90 so that they compile in parallel; proclist.f90 uses
+    #NB them and therefore has to come last.
+    src_files.extend(sorted(glob('proclist_pt_*.f90')))
     src_files.append('proclist.f90')
     if isfile('proclist_acf.f90'):
         src_files.append('proclist_acf.f90')

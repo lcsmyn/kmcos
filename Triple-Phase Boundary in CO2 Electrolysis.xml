@@ -25,6 +25,7 @@
         <parameter name="OH_diffuse" value="1" adjustable="True" min="1e-10" max="10000000000.0" scale="linear"/>
         <parameter name="T" value="298.15" adjustable="True" min="100" max="700" scale="linear"/>
         <parameter name="deltaG_CO_dissolve" value="0.1" adjustable="True" min="-1" max="1" scale="linear"/>
+        <parameter name="overpotential" value="-0.7" adjustable="True" min="-10" max="10" scale="linear"/>
         <parameter name="p_CO" value="0.01" adjustable="True" min="1e-10" max="100.0" scale="linear"/>
         <parameter name="p_CO2" value="1.0" adjustable="True" min="1e-10" max="100.0" scale="linear"/>
         <parameter name="reduce" value="1" adjustable="True" min="1e-10" max="10000000000.0" scale="linear"/>
@@ -144,6 +145,222 @@
         </layer>
     </lattice>
     <process_list>
+        <process rate_constant="1*1.92e-09/A*CO2_diffuse" name="absorb_CO2_1_10" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="1_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="1_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*1.92e-09/A*CO2_diffuse" name="absorb_CO2_2_10" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="2_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="2_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*1.92e-09/A*CO2_diffuse" name="absorb_CO2_3_10" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="3_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="3_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*1.92e-09/A*CO2_diffuse" name="absorb_CO2_4_10" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="4_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="4_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*1.92e-09/A*CO2_diffuse" name="absorb_CO2_5_10" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="5_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="5_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*1.92e-09/A*CO2_diffuse" name="absorb_CO2_6_10" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="6_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="6_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*1.92e-09/A*CO2_diffuse" name="absorb_CO2_7_10" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="7_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="7_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*1.92e-09/A*CO2_diffuse" name="absorb_CO2_8_10" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="8_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="8_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*1.92e-09/A*CO2_diffuse" name="absorb_CO2_9_1" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="9_1_active" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_1_active" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="2*1.92e-09/A*CO2_diffuse" name="absorb_CO2_9_10" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="9_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*1.92e-09/A*CO2_diffuse" name="absorb_CO2_9_2" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="9_2_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_2_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*1.92e-09/A*CO2_diffuse" name="absorb_CO2_9_3" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="9_3_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_3_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*1.92e-09/A*CO2_diffuse" name="absorb_CO2_9_4" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="9_4_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_4_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*1.92e-09/A*CO2_diffuse" name="absorb_CO2_9_5" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="9_5_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_5_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*1.92e-09/A*CO2_diffuse" name="absorb_CO2_9_6" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="9_6_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_6_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*1.92e-09/A*CO2_diffuse" name="absorb_CO2_9_7" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="9_7_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_7_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*1.92e-09/A*CO2_diffuse" name="absorb_CO2_9_8" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="9_8_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_8_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*1.92e-09/A*CO2_diffuse" name="absorb_CO2_9_9" enabled="True">
+            <condition species="CO2" coord_layer="tpb_line" coord_name="9_9_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_9_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*9.55e-10/A*CO3_diffuse" name="absorb_CO3_1_10" enabled="True">
+            <condition species="CO3" coord_layer="tpb_line" coord_name="1_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="1_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*9.55e-10/A*CO3_diffuse" name="absorb_CO3_2_10" enabled="True">
+            <condition species="CO3" coord_layer="tpb_line" coord_name="2_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="2_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*9.55e-10/A*CO3_diffuse" name="absorb_CO3_3_10" enabled="True">
+            <condition species="CO3" coord_layer="tpb_line" coord_name="3_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="3_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*9.55e-10/A*CO3_diffuse" name="absorb_CO3_4_10" enabled="True">
+            <condition species="CO3" coord_layer="tpb_line" coord_name="4_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="4_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*9.55e-10/A*CO3_diffuse" name="absorb_CO3_5_10" enabled="True">
+            <condition species="CO3" coord_layer="tpb_line" coord_name="5_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="5_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*9.55e-10/A*CO3_diffuse" name="absorb_CO3_6_10" enabled="True">
+            <condition species="CO3" coord_layer="tpb_line" coord_name="6_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="6_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*9.55e-10/A*CO3_diffuse" name="absorb_CO3_7_10" enabled="True">
+            <condition species="CO3" coord_layer="tpb_line" coord_name="7_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="7_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*9.55e-10/A*CO3_diffuse" name="absorb_CO3_8_10" enabled="True">
+            <condition species="CO3" coord_layer="tpb_line" coord_name="8_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="8_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*9.55e-10/A*CO3_diffuse" name="absorb_CO3_9_1" enabled="True">
+            <condition species="CO3" coord_layer="tpb_line" coord_name="9_1_active" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_1_active" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="2*9.55e-10/A*CO3_diffuse" name="absorb_CO3_9_10" enabled="True">
+            <condition species="CO3" coord_layer="tpb_line" coord_name="9_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*9.55e-10/A*CO3_diffuse" name="absorb_CO3_9_2" enabled="True">
+            <condition species="CO3" coord_layer="tpb_line" coord_name="9_2_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_2_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*9.55e-10/A*CO3_diffuse" name="absorb_CO3_9_3" enabled="True">
+            <condition species="CO3" coord_layer="tpb_line" coord_name="9_3_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_3_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*9.55e-10/A*CO3_diffuse" name="absorb_CO3_9_4" enabled="True">
+            <condition species="CO3" coord_layer="tpb_line" coord_name="9_4_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_4_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*9.55e-10/A*CO3_diffuse" name="absorb_CO3_9_5" enabled="True">
+            <condition species="CO3" coord_layer="tpb_line" coord_name="9_5_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_5_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*9.55e-10/A*CO3_diffuse" name="absorb_CO3_9_6" enabled="True">
+            <condition species="CO3" coord_layer="tpb_line" coord_name="9_6_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_6_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*9.55e-10/A*CO3_diffuse" name="absorb_CO3_9_7" enabled="True">
+            <condition species="CO3" coord_layer="tpb_line" coord_name="9_7_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_7_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*9.55e-10/A*CO3_diffuse" name="absorb_CO3_9_8" enabled="True">
+            <condition species="CO3" coord_layer="tpb_line" coord_name="9_8_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_8_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*9.55e-10/A*CO3_diffuse" name="absorb_CO3_9_9" enabled="True">
+            <condition species="CO3" coord_layer="tpb_line" coord_name="9_9_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_9_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*5.3e-09/A*OH_diffuse" name="absorb_OH_1_10" enabled="True">
+            <condition species="OH" coord_layer="tpb_line" coord_name="1_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="1_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*5.3e-09/A*OH_diffuse" name="absorb_OH_2_10" enabled="True">
+            <condition species="OH" coord_layer="tpb_line" coord_name="2_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="2_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*5.3e-09/A*OH_diffuse" name="absorb_OH_3_10" enabled="True">
+            <condition species="OH" coord_layer="tpb_line" coord_name="3_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="3_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*5.3e-09/A*OH_diffuse" name="absorb_OH_4_10" enabled="True">
+            <condition species="OH" coord_layer="tpb_line" coord_name="4_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="4_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*5.3e-09/A*OH_diffuse" name="absorb_OH_5_10" enabled="True">
+            <condition species="OH" coord_layer="tpb_line" coord_name="5_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="5_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*5.3e-09/A*OH_diffuse" name="absorb_OH_6_10" enabled="True">
+            <condition species="OH" coord_layer="tpb_line" coord_name="6_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="6_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*5.3e-09/A*OH_diffuse" name="absorb_OH_7_10" enabled="True">
+            <condition species="OH" coord_layer="tpb_line" coord_name="7_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="7_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*5.3e-09/A*OH_diffuse" name="absorb_OH_8_10" enabled="True">
+            <condition species="OH" coord_layer="tpb_line" coord_name="8_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="8_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*5.3e-09/A*OH_diffuse" name="absorb_OH_9_1" enabled="True">
+            <condition species="OH" coord_layer="tpb_line" coord_name="9_1_active" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_1_active" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="2*5.3e-09/A*OH_diffuse" name="absorb_OH_9_10" enabled="True">
+            <condition species="OH" coord_layer="tpb_line" coord_name="9_10_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_10_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*5.3e-09/A*OH_diffuse" name="absorb_OH_9_2" enabled="True">
+            <condition species="OH" coord_layer="tpb_line" coord_name="9_2_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_2_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*5.3e-09/A*OH_diffuse" name="absorb_OH_9_3" enabled="True">
+            <condition species="OH" coord_layer="tpb_line" coord_name="9_3_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_3_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*5.3e-09/A*OH_diffuse" name="absorb_OH_9_4" enabled="True">
+            <condition species="OH" coord_layer="tpb_line" coord_name="9_4_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_4_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*5.3e-09/A*OH_diffuse" name="absorb_OH_9_5" enabled="True">
+            <condition species="OH" coord_layer="tpb_line" coord_name="9_5_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_5_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*5.3e-09/A*OH_diffuse" name="absorb_OH_9_6" enabled="True">
+            <condition species="OH" coord_layer="tpb_line" coord_name="9_6_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_6_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*5.3e-09/A*OH_diffuse" name="absorb_OH_9_7" enabled="True">
+            <condition species="OH" coord_layer="tpb_line" coord_name="9_7_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_7_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*5.3e-09/A*OH_diffuse" name="absorb_OH_9_8" enabled="True">
+            <condition species="OH" coord_layer="tpb_line" coord_name="9_8_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_8_bulk" coord_offset="0 0 0"/>
+        </process>
+        <process rate_constant="1*5.3e-09/A*OH_diffuse" name="absorb_OH_9_9" enabled="True">
+            <condition species="OH" coord_layer="tpb_line" coord_name="9_9_bulk" coord_offset="0 0 0"/>
+            <action species="empty" coord_layer="tpb_line" coord_name="9_9_bulk" coord_offset="0 0 0"/>
+        </process>
         <process rate_constant="1.92e-09/A*CO2_diffuse" name="diffuse_CO2_1_10_1_9" enabled="True">
             <condition species="empty" coord_layer="tpb_line" coord_name="1_9_bulk" coord_offset="0 0 0"/>
             <condition species="CO2" coord_layer="tpb_line" coord_name="1_10_bulk" coord_offset="0 0 0"/>
@@ -9240,7 +9457,7 @@
             <action species="empty" coord_layer="tpb_line" coord_name="0_9_boundary" coord_offset="0 0 0"/>
             <action species="CO2" coord_layer="tpb_line" coord_name="1_9_bulk" coord_offset="0 0 0"/>
         </process>
-        <process rate_constant="10000000000000.0*exp(-Ea_CO2_reduce*eV*beta)*reduce" name="reduction_1" enabled="True">
+        <process rate_constant="10000000000000.0*exp(-(Ea_CO2_reduce+overpotential)*eV*beta)*reduce" name="reduction_1" enabled="True">
             <condition species="CO2" coord_layer="tpb_line" coord_name="1_1_active" coord_offset="0 0 0"/>
             <condition species="empty" coord_layer="tpb_line" coord_name="1_2_bulk" coord_offset="0 0 0"/>
             <condition species="empty" coord_layer="tpb_line" coord_name="1_3_bulk" coord_offset="0 0 0"/>
@@ -9248,7 +9465,7 @@
             <action species="OH" coord_layer="tpb_line" coord_name="1_3_bulk" coord_offset="0 0 0"/>
             <action species="empty" coord_layer="tpb_line" coord_name="1_1_active" coord_offset="0 0 0"/>
         </process>
-        <process rate_constant="10000000000000.0*exp(-Ea_CO2_reduce*eV*beta)*reduce" name="reduction_2" enabled="True">
+        <process rate_constant="10000000000000.0*exp(-(Ea_CO2_reduce+overpotential)*eV*beta)*reduce" name="reduction_2" enabled="True">
             <condition species="CO2" coord_layer="tpb_line" coord_name="2_1_active" coord_offset="0 0 0"/>
             <condition species="empty" coord_layer="tpb_line" coord_name="2_2_bulk" coord_offset="0 0 0"/>
             <condition species="empty" coord_layer="tpb_line" coord_name="2_3_bulk" coord_offset="0 0 0"/>
@@ -9256,7 +9473,7 @@
             <action species="OH" coord_layer="tpb_line" coord_name="2_3_bulk" coord_offset="0 0 0"/>
             <action species="empty" coord_layer="tpb_line" coord_name="2_1_active" coord_offset="0 0 0"/>
         </process>
-        <process rate_constant="10000000000000.0*exp(-Ea_CO2_reduce*eV*beta)*reduce" name="reduction_3" enabled="True">
+        <process rate_constant="10000000000000.0*exp(-(Ea_CO2_reduce+overpotential)*eV*beta)*reduce" name="reduction_3" enabled="True">
             <condition species="CO2" coord_layer="tpb_line" coord_name="3_1_active" coord_offset="0 0 0"/>
             <condition species="empty" coord_layer="tpb_line" coord_name="3_2_bulk" coord_offset="0 0 0"/>
             <condition species="empty" coord_layer="tpb_line" coord_name="3_3_bulk" coord_offset="0 0 0"/>
@@ -9264,7 +9481,7 @@
             <action species="OH" coord_layer="tpb_line" coord_name="3_3_bulk" coord_offset="0 0 0"/>
             <action species="empty" coord_layer="tpb_line" coord_name="3_1_active" coord_offset="0 0 0"/>
         </process>
-        <process rate_constant="10000000000000.0*exp(-Ea_CO2_reduce*eV*beta)*reduce" name="reduction_4" enabled="True">
+        <process rate_constant="10000000000000.0*exp(-(Ea_CO2_reduce+overpotential)*eV*beta)*reduce" name="reduction_4" enabled="True">
             <condition species="CO2" coord_layer="tpb_line" coord_name="4_1_active" coord_offset="0 0 0"/>
             <condition species="empty" coord_layer="tpb_line" coord_name="4_2_bulk" coord_offset="0 0 0"/>
             <condition species="empty" coord_layer="tpb_line" coord_name="4_3_bulk" coord_offset="0 0 0"/>
@@ -9272,7 +9489,7 @@
             <action species="OH" coord_layer="tpb_line" coord_name="4_3_bulk" coord_offset="0 0 0"/>
             <action species="empty" coord_layer="tpb_line" coord_name="4_1_active" coord_offset="0 0 0"/>
         </process>
-        <process rate_constant="10000000000000.0*exp(-Ea_CO2_reduce*eV*beta)*reduce" name="reduction_5" enabled="True">
+        <process rate_constant="10000000000000.0*exp(-(Ea_CO2_reduce+overpotential)*eV*beta)*reduce" name="reduction_5" enabled="True">
             <condition species="CO2" coord_layer="tpb_line" coord_name="5_1_active" coord_offset="0 0 0"/>
             <condition species="empty" coord_layer="tpb_line" coord_name="5_2_bulk" coord_offset="0 0 0"/>
             <condition species="empty" coord_layer="tpb_line" coord_name="5_3_bulk" coord_offset="0 0 0"/>
@@ -9280,7 +9497,7 @@
             <action species="OH" coord_layer="tpb_line" coord_name="5_3_bulk" coord_offset="0 0 0"/>
             <action species="empty" coord_layer="tpb_line" coord_name="5_1_active" coord_offset="0 0 0"/>
         </process>
-        <process rate_constant="10000000000000.0*exp(-Ea_CO2_reduce*eV*beta)*reduce" name="reduction_6" enabled="True">
+        <process rate_constant="10000000000000.0*exp(-(Ea_CO2_reduce+overpotential)*eV*beta)*reduce" name="reduction_6" enabled="True">
             <condition species="CO2" coord_layer="tpb_line" coord_name="6_1_active" coord_offset="0 0 0"/>
             <condition species="empty" coord_layer="tpb_line" coord_name="6_2_bulk" coord_offset="0 0 0"/>
             <condition species="empty" coord_layer="tpb_line" coord_name="6_3_bulk" coord_offset="0 0 0"/>
@@ -9288,7 +9505,7 @@
             <action species="OH" coord_layer="tpb_line" coord_name="6_3_bulk" coord_offset="0 0 0"/>
             <action species="empty" coord_layer="tpb_line" coord_name="6_1_active" coord_offset="0 0 0"/>
         </process>
-        <process rate_constant="10000000000000.0*exp(-Ea_CO2_reduce*eV*beta)*reduce" name="reduction_7" enabled="True">
+        <process rate_constant="10000000000000.0*exp(-(Ea_CO2_reduce+overpotential)*eV*beta)*reduce" name="reduction_7" enabled="True">
             <condition species="CO2" coord_layer="tpb_line" coord_name="7_1_active" coord_offset="0 0 0"/>
             <condition species="empty" coord_layer="tpb_line" coord_name="7_2_bulk" coord_offset="0 0 0"/>
             <condition species="empty" coord_layer="tpb_line" coord_name="7_3_bulk" coord_offset="0 0 0"/>
@@ -9296,7 +9513,7 @@
             <action species="OH" coord_layer="tpb_line" coord_name="7_3_bulk" coord_offset="0 0 0"/>
             <action species="empty" coord_layer="tpb_line" coord_name="7_1_active" coord_offset="0 0 0"/>
         </process>
-        <process rate_constant="10000000000000.0*exp(-Ea_CO2_reduce*eV*beta)*reduce" name="reduction_8" enabled="True">
+        <process rate_constant="10000000000000.0*exp(-(Ea_CO2_reduce+overpotential)*eV*beta)*reduce" name="reduction_8" enabled="True">
             <condition species="CO2" coord_layer="tpb_line" coord_name="8_1_active" coord_offset="0 0 0"/>
             <condition species="empty" coord_layer="tpb_line" coord_name="8_2_bulk" coord_offset="0 0 0"/>
             <condition species="empty" coord_layer="tpb_line" coord_name="8_3_bulk" coord_offset="0 0 0"/>
@@ -9304,7 +9521,7 @@
             <action species="OH" coord_layer="tpb_line" coord_name="8_3_bulk" coord_offset="0 0 0"/>
             <action species="empty" coord_layer="tpb_line" coord_name="8_1_active" coord_offset="0 0 0"/>
         </process>
-        <process rate_constant="10000000000000.0*exp(-Ea_CO2_reduce*eV*beta)*reduce" name="reduction_9" enabled="True">
+        <process rate_constant="10000000000000.0*exp(-(Ea_CO2_reduce+overpotential)*eV*beta)*reduce" name="reduction_9" enabled="True">
             <condition species="CO2" coord_layer="tpb_line" coord_name="9_1_active" coord_offset="0 0 0"/>
             <condition species="empty" coord_layer="tpb_line" coord_name="9_2_bulk" coord_offset="0 0 0"/>
             <condition species="empty" coord_layer="tpb_line" coord_name="9_3_bulk" coord_offset="0 0 0"/>

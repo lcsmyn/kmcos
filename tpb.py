@@ -105,7 +105,7 @@ pt.lattice.cell = np.diag([site_width,
 temp = 298.15
 p_CO2 = 1.0
 p_CO = 0.01
-bias_v = -3.0
+overpotential = -0.7
 
 pt.add_parameter(name="T", value=temp, adjustable=True, min=100, max=700)
 pt.add_parameter(name="p_CO2", value=p_CO2, adjustable=True, min=1e-10, max=1.0e2)
@@ -129,7 +129,7 @@ pt.add_parameter(name="CO_diffuse", value=1, adjustable=True, min=1e-10, max=1e1
 pt.add_parameter(name="OH_diffuse", value=1, adjustable=True, min=1e-10, max=1e10)
 pt.add_parameter(name="CO3_diffuse", value=1, adjustable=True, min=1e-10, max=1e10)
 
-pt.add_parameter(name="bias_v", value=bias_v, adjustable=True, min=-10, max=10)
+pt.add_parameter(name="overpotential", value=overpotential, adjustable=True, min=-10, max=10)
 
 
 DIFFUSION_CO2 = 1.92e-9 # m^2 / s at 298 K in water, according to Wikipedia
@@ -156,14 +156,16 @@ DIFFUSING_SPECIES = [
 # every process here does have a reverse.
 #
 # Every process that just swaps one species for `empty` on a single site has
-# that shape, and three of them collide: the corner site (y = last, z = last) is
-# an open boundary in both y and z, and the top of the y = 0 column is both a
-# gas-exchange site and an open boundary in z.
+# that shape, so any two channels acting on the same (species, site) collide.
 #
 # Independent kMC channels for the same transition are Poisson processes, so the
 # physics is unchanged if we emit one process per (species, site) whose rate is
 # the sum of the channel rates. That is what this accumulator does; the
-# processes are written out once both loops below have contributed.
+# processes are written out once the loop below has contributed.
+#
+# Only the CO2 gas exchange goes through here now. The absorbing boundaries
+# below are written out directly, because they have no reverse to pair with
+# anyway.
 
 single_site_channels = {}
 
@@ -267,33 +269,33 @@ for z in range(1, NUM_ELECTROLYTE_SITES+1):
                 )
 
             # OPEN (ABSORBING) BOUNDARY CONDITIONS
-            # The far edges in y (deep into the electrolyte, away from the gas
-            # interface at y=0) and in z (top of the electrolyte) open onto bulk
-            # electrolyte that acts as an infinite sink. Without these processes a
-            # solute reaching the edge can only hop back inwards, which reflects it
-            # and artificially piles up concentration at the boundary.
+            # The far edge in y (deep into the electrolyte, away from the gas
+            # interface at y=0) and the top edge in z open onto bulk electrolyte,
+            # which acts as an infinite sink: a solute that crosses either face
+            # is gone. Without this a solute reaching the edge can only hop back
+            # inwards, which reflects it and artificially piles up concentration
+            # against the boundary.
             #
-            # Each open direction is a hop, at the usual directional rate, into a
-            # neighbour that is held empty (concentration 0): this is a Dirichlet
-            # c=0 condition on those two faces. The corner site is open in both y
-            # and z, so it contributes twice and can escape in either direction,
-            # as it should -- the accumulator sums the two into one process
-            # rather than emitting two identically shaped ones.
+            # An escape is just the ordinary directional hop into a neighbour
+            # that is always empty, i.e. a Dirichlet c=0 condition on those two
+            # faces, so it runs at the same rate as an interior hop and needs no
+            # condition on a second site. A corner site is open in both y and z
+            # and so escapes at twice that rate.
             #
-            # The reverse gets an artificially high rate constant because we
-            # need to pair. Issue: species actually do go back from the
-            # boundary, we need to take this into account. just extending the
-            # size of cell might work, though.
+            # There is deliberately no reverse process: nothing diffuses back in
+            # from the bulk. That is the approximation to revisit -- real bulk
+            # electrolyte does return solute across the same face -- and because
+            # these processes are unpaired the model can no longer be exported
+            # with temporal acceleration (kmcos export -t).
 
-            # if y == NUM_CATALYST_SITES-1 or z == NUM_ELECTROLYTE_SITES:
-            #     for _ in range((y == NUM_CATALYST_SITES-1) + (z == NUM_ELECTROLYTE_SITES)):
-            #         add_single_site_channel(
-            #             species, y, z,
-            #             forward_rate=rate,
-            #             reverse_rate="0.01",
-            #             forward_name=f"absorb_{species}_{y}_{z}",
-            #             reverse_name=f"absorb_rev_{species}_{y}_{z}",
-            #         )
+            open_faces = (y == NUM_CATALYST_SITES-1) + (z == NUM_ELECTROLYTE_SITES)
+
+            if open_faces:
+                pt.parse_and_add_process(
+                    f"absorb_{species}_{y}_{z}; \
+                      {species}@{center_site} -> empty@{center_site}; \
+                      {open_faces}*{rate}"
+                )
 
             # X-AXIS DIFFUSION
             # note: boundary conditions are periodic, so we don't have to add it in
@@ -345,12 +347,16 @@ for y in range(1, NUM_CATALYST_SITES):
     # Also, CO is no longer in the picture because we don't know how it enters and exits
     # the electrolyte. So it is just gone from the simulation for now.
 
-    # we have also implemented the change in reduction rate constant based on the bias voltage (-3 V by default).
+    # we have also implemented the change in reduction rate constant based on the bias voltage (-0.7 V by default, as
+    # this is the value for bulk Ag).
+
+    # there is no adjustment for the fact that the process is a multi-electron transfer, since most sources
+    # seem to indicate that the second transfer has a very low barrier and thus happens ~instantaneously.
 
     pt.parse_and_add_process(
         f"reduction_{y}; \
           CO2@{active_site} -> OH@{oh_site_1} + OH@{oh_site_2}; \
-          {PREFACTOR}*exp(-(Ea_CO2_reduce+0.5*bias_v)*eV*beta)*reduce"
+          {PREFACTOR}*exp(-(Ea_CO2_reduce+overpotential)*eV*beta)*reduce"
     )
 
     # the reverse process is needed for temporal acceleration, but it doesn't actually exist.

@@ -99,6 +99,16 @@ try:
 except:
     proclist_pars = None
 
+#NB the local_smart put/take/touchup routines may be spread over several
+#NB proclist_pt_* modules so that they compile in parallel. They are part of
+#NB the process list as far as anything outside is concerned, so the proxy
+#NB below looks them up as if they still lived in proclist itself.
+try:
+    proclist_chunks = [getattr(kmc_model, name) for name in sorted(dir(kmc_model))
+                       if name.startswith('proclist_pt_')]
+except:
+    proclist_chunks = []
+
 try:
     from kmc_model import base_acf, proclist_acf
 except:
@@ -126,9 +136,12 @@ INTERACTIVE = True  # Turn it off for now because it doesn work reliably
 class ProclistProxy(object):
 
     def __dir__(selftr):
-        return list(set(dir(proclist) +
-                        dir(proclist_constants) +
-                        dir(proclist_pars)))
+        names = set(dir(proclist) +
+                    dir(proclist_constants) +
+                    dir(proclist_pars))
+        for chunk in proclist_chunks:
+            names.update(dir(chunk))
+        return list(names)
 
     def __getattr__(self, attr):
         if attr in dir(proclist):
@@ -137,8 +150,10 @@ class ProclistProxy(object):
             return eval('proclist_constants.%s' % attr)
         elif attr in dir(proclist_pars):
             return eval('proclist_pars.%s' % attr)
-        else:
-            raise AttributeError('%s not found' % attr)
+        for chunk in proclist_chunks:
+            if attr in dir(chunk):
+                return getattr(chunk, attr)
+        raise AttributeError('%s not found' % attr)
 
 def check_directory(directory):
         """

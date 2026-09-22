@@ -55,6 +55,8 @@ if code_generator == 'local_smart':
     #@     spuck, &
 #@     get_species
 #@ 
+for extra_module in extra_modules:
+    #@ use {extra_module}
 #@ 
 #@ implicit none
 #@ 
@@ -72,19 +74,17 @@ if len(data.layer_list) > 1 : # multi-lattice mode
     #@ integer(kind=iint), parameter, public :: nr_of_species = {len_species_list_p1}
 else:
     #@ integer(kind=iint), parameter, public :: nr_of_species = {len_species_list}
-for i, species in enumerate(sorted(data.species_list, key=lambda x: x.name)):
-    #@ integer(kind=iint), parameter, public :: {species.name} = {i}
-if len(data.layer_list) > 1 : # multi-lattice mode
-    #@ integer(kind=iint), parameter, public :: null_species = {len_species_list}
+for name, value in self.species_constants(data):
+    #@ integer(kind=iint), parameter, public :: {name} = {value}
+if len(data.layer_list) > 1 : # multi-lattice mode, where null_species was added
     #@
 #@ integer(kind=iint), public :: default_species = {data.species_list.default_species}
 #@
 #@
 #@ ! Process constants
 #@
-for i, process in enumerate(self.data.process_list):
-    ip1 = i + 1
-    #@ integer(kind=iint), parameter, public :: {process.name} = {ip1}
+for name, value in self.process_constants(data):
+    #@ integer(kind=iint), parameter, public :: {name} = {value}
 
 if code_generator == 'local_smart':
     representation_length = max([len(species.representation) for species in data.species_list])

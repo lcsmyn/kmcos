@@ -18,5 +18,11 @@
 gfortran -c kind_values_f2py.f90 -g -pg
 gfortran -c base.f90 -cpp -g -pg
 gfortran -c lattice.f90 -g -pg
+# the put/take/touchup routines may be split over several modules so that they
+# compile in parallel; proclist uses them and has to come last
+chunks=$(ls proclist_pt_*.f90 2>/dev/null || true)
+if [ -n "$chunks" ]; then
+    echo "$chunks" | xargs -n 1 -P "$(nproc)" gfortran -g -pg -c
+fi
 gfortran -c proclist.f90 -g -pg
-gfortran -o run_kmc run_kmc.f90 kind_values_f2py.o base.o lattice.o proclist.o -g -pg
+gfortran -o run_kmc run_kmc.f90 kind_values_f2py.o base.o lattice.o ${chunks//.f90/.o} proclist.o -g -pg

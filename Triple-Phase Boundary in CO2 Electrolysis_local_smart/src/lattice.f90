@@ -62,19 +62,63 @@ use base, only: &
 implicit none
 
 integer(kind=iint), dimension(3), public :: system_size
+!****v* lattice/system_size
+! FUNCTION
+!   Stores the current size of the allocated system lattice (x, y, z)
+!   in an integer array. In low-dimensional system, corresponding entries will be set to 1.
+!   Note that this should be thought of as a read-only variable. Changing its value at model
+!   runtime will not the indented effect of actually changing the simulated lattice.
+!   The definitive location for custom lattice size is `simulation_size` in `kmc_settings.py`.
+!
+!   If the system size shall be changed programmatically, it needs to happen before the `KMC_Model`
+!   is instantiated and Fortran array are allocated accordingly, like to
+!
+!       #!/usr/bin/env python3
+!
+!       import kmc_settings
+!       import kmcos.run
+!
+!       kmc_settings.simulation_size = 9, 9, 4
+!
+!       with kmcos.run.KMC_Model() as model:
+!           print(model.lattice.system_size)))`
+!
+!******
 integer(kind=iint), parameter, public :: nr_of_layers = 1
+!****v* lattice/nr_of_layers
+! FUNCTION
+!   Constant storing the number of layers (for multi-lattice models > 1)
+!******
 
  ! Layer constants
 
 integer(kind=iint), parameter, public :: model_dimension = 1
+!****v* lattice/model_dimension
+! FUNCTION
+!   Store the number of dimensions of this model: 1, 2, or 3
+!******
 integer(kind=iint), parameter, public :: tpb_line = 0
 integer(kind=iint), public :: default_layer = tpb_line
+!****v* lattice/default_layer
+! FUNCTION
+!   The layer in which the model is initially in by default (only relevant for multi-lattice models).
+!******
 integer(kind=iint), public :: substrate_layer = tpb_line
 
  ! Site constants
 
 real(kind=rsingle), dimension(3,3), public :: unit_cell_size = 0.
+!****v* lattice/unit_cell_size
+! FUNCTION
+!   The dimensions of the unit cell (e.g. in Angstrom) of the
+!   unit cell.
+!******
 real(kind=rsingle), dimension(110, 3), public :: site_positions
+!****v* lattice/site_positions
+! FUNCTION
+!   The positions of (adsorption) site in the unit cell in
+!   fractional coordinates.
+!******
 integer(kind=iint), parameter, public :: tpb_line_0_0_substrate = 1
 integer(kind=iint), parameter, public :: tpb_line_0_1_boundary = 2
 integer(kind=iint), parameter, public :: tpb_line_0_2_boundary = 3
@@ -186,11 +230,26 @@ integer(kind=iint), parameter, public :: tpb_line_9_8_bulk = 108
 integer(kind=iint), parameter, public :: tpb_line_9_9_bulk = 109
 integer(kind=iint), parameter, public :: tpb_line_9_10_bulk = 110
 
- ! spuck = Sites Per Unit Cell Konstant
 integer(kind=iint), parameter, public :: spuck = 110
+!****v* lattice/spuck
+! FUNCTION
+!   spuck = Sites Per Unit Cell Konstant
+!   The number of sites per unit cell, i.e. for coordinate
+!   notation (x, y, n) this is the maximum value of `n`.
+!******
  ! lookup tables
 integer(kind=iint), dimension(:, :), allocatable, public :: nr2lattice
+!****v* lattice/nr2lattice
+! FUNCTION
+!   Caching array holding the mapping from index to lattice
+!   coordinate: i -> (x, y, z, n).
+!******
 integer(kind=iint), dimension(:,:,:,:), allocatable, public :: lattice2nr
+!****v* lattice/lattice2nr
+! FUNCTION
+!   Caching array holding the mapping from index to lattice
+!   coordinate:  (x, y, z, n) -> i.
+!******
 
 
 
@@ -237,7 +296,7 @@ pure function calculate_nr2lattice(nr)
 
 end function calculate_nr2lattice
 
-subroutine allocate_system(nr_of_proc, input_system_size, system_name, buffer_parameter, threshold_parameter, execution_steps, save_limit)
+subroutine allocate_system(nr_of_proc, input_system_size, system_name)
 
 !****f* lattice/allocate_system
 ! FUNCTION
@@ -248,8 +307,7 @@ subroutine allocate_system(nr_of_proc, input_system_size, system_name, buffer_pa
 !
 !    ``none``
 !******
-    integer(kind=iint), intent(in) :: nr_of_proc, execution_steps, save_limit
-    real(kind=rdouble), intent(in) :: threshold_parameter, buffer_parameter
+    integer(kind=iint), intent(in) :: nr_of_proc
     integer(kind=iint), dimension(1), intent(in) :: input_system_size
     character(len=200), intent(in) :: system_name
 
@@ -305,7 +363,7 @@ subroutine allocate_system(nr_of_proc, input_system_size, system_name, buffer_pa
         end do
     end do
 
-    call base_allocate_system(nr_of_proc, volume, system_name, buffer_parameter, threshold_parameter, execution_steps, save_limit)
+    call base_allocate_system(nr_of_proc, volume, system_name)
 
     unit_cell_size(1, 1) = 2.8892
     unit_cell_size(1, 2) = 0.0

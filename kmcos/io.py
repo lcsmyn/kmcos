@@ -181,25 +181,52 @@ class ProcListWriter():
         with open(os.path.join(self.dir, '{target}.f90'.format(**locals())), 'w') as out:
             out.write(evaluate_template(template,  self=self, data=self.data, options=options))
 
-    def write_proclist(self, smart=True, code_generator='local_smart', accelerated=False):
+    def write_proclist(self, smart=True, code_generator='local_smart', accelerated=False, split=1):
         """Write the proclist.f90 module, i.e. the rules which make up
         the kMC process list.
+
+        `split` is the number of files the put/take/touchup routines of the
+        local_smart backend are spread over. They are the bulk of the
+        generated code and are independent of one another, so putting them in
+        separate modules lets the Fortran compiler work on them in parallel
+        instead of chewing through one multi-hundred-thousand-line file on a
+        single core.
         """
         # make long lines a little shorter
         data = self.data
 
+        if code_generator == 'local_smart':
+            #NB an earlier export into this directory may have left more chunk
+            #NB files than this one writes, and the build globs whatever it
+            #NB finds, so clear them out first
+            from glob import glob
+            for stale_chunk in glob('%s/proclist_pt_*.f90' % self.dir):
+                os.remove(stale_chunk)
+
+            # The chunks have to be written first: proclist has to `use` them,
+            # so their names have to be known before its header goes out.
+            chunks = ChunkedSubroutineWriter(self, data, split)
+            self.write_proclist_put_take(data, chunks)
+            self.write_proclist_touchup(data, chunks)
+            self.write_proclist_multilattice(data, chunks)
+            chunk_modules = chunks.close()
+
+            out = open('%s/proclist.f90' % self.dir, 'w')
+            self.write_proclist_generic_part(data, out, code_generator=code_generator,
+                                             accelerated=accelerated,
+                                             extra_modules=chunk_modules)
+            self.write_proclist_run_proc_nr_smart(data, out)
+            if not chunk_modules:
+                # too little code to be worth splitting up
+                chunks.write_inline(out)
+            self.write_proclist_end(out)
+            out.close()
+            return
+
         # write header section and module imports
         out = open('%s/proclist.f90' % self.dir, 'w')
 
-        if code_generator == 'local_smart':
-            self.write_proclist_generic_part(data, out, code_generator=code_generator, accelerated=accelerated)
-            self.write_proclist_run_proc_nr_smart(data, out)
-            self.write_proclist_put_take(data, out)
-            self.write_proclist_touchup(data, out)
-            self.write_proclist_multilattice(data, out)
-            self.write_proclist_end(out)
-
-        elif code_generator == 'lat_int':
+        if code_generator == 'lat_int':
             constants_out = open('%s/proclist_constants.f90' % self.dir, 'w')
             self.write_proclist_constants(data,
                                           constants_out,
@@ -312,7 +339,8 @@ class ProcListWriter():
                                  code_generator='local_smart',
                                  close_module=False,
                                  module_name='proclist',
-                                 accelerated=False):
+                                 accelerated=False,
+                                 extra_modules=()):
 
         if accelerated:
             with open(os.path.join(os.path.dirname(__file__),
@@ -330,11 +358,63 @@ class ProcListWriter():
                                     data=data,
                                     code_generator=code_generator,
                                     close_module=close_module,
-                                    module_name=module_name))
+                                    module_name=module_name,
+                                    extra_modules=list(extra_modules)))
 
 
-    def write_proclist_generic_part(self, data, out, code_generator='local_smart', accelerated=False):
-        self.write_proclist_constants(data, out, close_module=False, accelerated=accelerated)
+    def species_constants(self, data):
+        """(name, value) pairs of the species constants, in the order in which
+        the proclist module declares them. Shared by proclist_constants.mpy
+        and the put/take/touchup chunk modules so that both spell the
+        constants the same way."""
+        constants = [(species.name, i) for i, species
+                     in enumerate(sorted(data.species_list, key=lambda x: x.name))]
+        if len(data.layer_list) > 1:  # multi-lattice mode
+            constants.append(('null_species', len(data.species_list)))
+        return constants
+
+    def process_constants(self, data):
+        """(name, value) pairs of the process constants, in declaration order."""
+        return [(process.name, i + 1) for i, process in enumerate(data.process_list)]
+
+    def write_proclist_chunk_header(self, data, out, module_name):
+        """Module header for one put/take/touchup chunk.
+
+        Those routines only ever touch the lattice, avail_sites and the
+        species/process constants. The constants are repeated here as private
+        parameters instead of being taken from proclist, because proclist is
+        the module that `use`s the chunks and so cannot be the one to hand
+        them their constants. They are parameters, so repeating them shares
+        no state -- private keeps them from colliding with proclist's own
+        copies when proclist uses the chunk.
+        """
+        out.write(self._gpl_message())
+        out.write('module %s\n' % module_name)
+        out.write('use kind_values\n')
+        out.write('use base, only: &\n')
+        out.write('    avail_sites, &\n')
+        if len(data.layer_list) == 1:
+            out.write('    null_species\n\n')
+        else:
+            out.write('    set_null_species\n\n')
+        out.write('use lattice, only: &\n')
+        for layer in data.layer_list:
+            out.write('    %s, &\n' % layer.name)
+            for site in layer.sites:
+                out.write('    %s_%s, &\n' % (layer.name, site.name))
+        for routine in ['add_proc', 'can_do', 'replace_species', 'del_proc',
+                        'lattice2nr', 'nr2lattice', 'spuck', 'system_size']:
+            out.write('    %s, &\n' % routine)
+        out.write('    get_species\n\n')
+        out.write('implicit none\n\n')
+        for name, value in self.species_constants(data) + self.process_constants(data):
+            out.write('integer(kind=iint), parameter, private :: %s = %s\n' % (name, value))
+        out.write('\n\ncontains\n\n')
+
+    def write_proclist_generic_part(self, data, out, code_generator='local_smart', accelerated=False,
+                                    extra_modules=()):
+        self.write_proclist_constants(data, out, close_module=False, accelerated=accelerated,
+                                      extra_modules=extra_modules)
         out.write('\n\ncontains\n\n')
         self.write_proclist_generic_subroutines(data, out, code_generator=code_generator, accelerated=accelerated)
 
@@ -3135,6 +3215,102 @@ class ProcListWriter():
         return out
 
 
+def proclist_files(options=None):
+    """Number of files to spread the local_smart put/take/touchup routines
+    over. 0 (the default) means one per core, which is what the compiler can
+    actually run at the same time.
+    """
+    nr_of_files = getattr(options, 'proclist_files', 0) or 0
+    if nr_of_files <= 0:
+        nr_of_files = min(32, os.cpu_count() or 1)
+    return max(1, nr_of_files)
+
+
+class ChunkedSubroutineWriter(object):
+    """File-like sink that spreads whole subroutines over several modules.
+
+    The local_smart put/take/touchup routines are the bulk of the generated
+    code -- for a model with many site types the touchup routines alone are
+    an order of magnitude larger than everything else put together -- and
+    they are independent of one another. Handing them out over several
+    modules that proclist then `use`s leaves the model unchanged but lets the
+    Fortran compiler build them in parallel, which is what f2py's meson
+    backend does with the sources it is given.
+
+    The proclist writers treat this as the file they write to. Everything
+    from a `subroutine` line to its `end subroutine` is collected as one
+    unit, and `close` deals them out over as many files as the code is
+    actually worth splitting into.
+    """
+
+    #NB below this many lines a chunk is not worth its own file: every chunk
+    #NB repeats the species and process constants, and the compiler is fast on
+    #NB a file of this size anyway.
+    MIN_CHUNK_LINES = 20000
+
+    def __init__(self, writer, data, nr_of_chunks, prefix='proclist_pt'):
+        self.writer = writer
+        self.data = data
+        self.prefix = prefix
+        self.nr_of_chunks = max(1, nr_of_chunks)
+        self.routines = []
+        self.routine = []
+
+    def write(self, text):
+        self.routine.append(text)
+        if text.lstrip().startswith('end subroutine'):
+            routine = ''.join(self.routine)
+            self.routine = []
+            self.routines.append(routine)
+
+    def _check_complete(self):
+        if self.routine:
+            raise RuntimeError('Trailing code outside of a subroutine: %s'
+                               % ''.join(self.routine)[:200])
+
+    def write_inline(self, out):
+        """Write everything to a single file, in the order it was generated."""
+        self._check_complete()
+        for routine in self.routines:
+            out.write(routine)
+
+    def close(self):
+        """Write the chunk files and return their module names.
+
+        Returns an empty list if the code is small enough that splitting it
+        would only add files; the caller then writes it into proclist itself.
+        """
+        self._check_complete()
+
+        total_lines = sum(routine.count('\n') for routine in self.routines)
+        nr_of_chunks = min(self.nr_of_chunks,
+                           total_lines // self.MIN_CHUNK_LINES,
+                           len(self.routines))
+        if nr_of_chunks < 2:
+            return []
+
+        # longest routine first into whichever chunk is smallest so far: the
+        # touchup routines are far larger than the put/take ones, so filling
+        # in generation order would leave the chunks lopsided
+        chunks = [[] for _ in range(nr_of_chunks)]
+        lines = [0] * nr_of_chunks
+        for routine in sorted(self.routines, key=lambda r: -r.count('\n')):
+            smallest = min(range(nr_of_chunks), key=lambda i: lines[i])
+            chunks[smallest].append(routine)
+            lines[smallest] += routine.count('\n')
+
+        module_names = []
+        for i, routines in enumerate(chunks):
+            module_name = '%s_%s' % (self.prefix, i)
+            module_names.append(module_name)
+            with open('%s/%s.f90' % (self.writer.dir, module_name), 'w') as out:
+                self.writer.write_proclist_chunk_header(self.data, out, module_name)
+                for routine in routines:
+                    out.write(routine)
+                out.write('\nend module %s\n' % module_name)
+        return module_names
+
+
 def export_source(project_tree, export_dir=None, code_generator=None, options=None, accelerated=False):
     """Export a kmcos project into Fortran 90 code that can be readily
     compiled using f2py.  The model contained in project_tree
@@ -3229,7 +3405,8 @@ def export_source(project_tree, export_dir=None, code_generator=None, options=No
         writer.write_template(filename='lattice', options=options)
     else:
         writer.write_template(filename='lattice_acc', target='lattice', options=options)
-    writer.write_proclist(code_generator=code_generator, accelerated=accelerated)
+    writer.write_proclist(code_generator=code_generator, accelerated=accelerated,
+                          split=proclist_files(options))
     if options is not None and options.acf:
        writer.write_proclist_acf(code_generator=code_generator) 
     writer.write_settings(code_generator=code_generator, accelerated=accelerated)

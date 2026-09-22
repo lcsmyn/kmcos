@@ -86,6 +86,15 @@ usage['export'] = """kmcos export <xml-file> [<export-path>]
             lat_int is EXPERIMENTAL and not made
             for production, yet.
 
+        -j/--proclist-files <number>
+            Spread the local_smart put/take/touchup routines
+            over this many files, so that the Fortran compiler
+            builds them in parallel instead of working through
+            one huge proclist.f90 on a single core. They are
+            most of the generated code, so for a model with
+            many sites this is most of the build time.
+            Default is 0, meaning one file per core.
+
         -t/--temp_acc
             Use temporal acceleration scheme.
             Builds the modules base_acc.f90, lattice_acc.mpy, 
@@ -213,6 +222,14 @@ def get_options(args=None, get_parser=False):
                       dest='variable_length',
                       default=95,
                       type='int')
+
+    parser.add_option('-j', '--proclist-files',
+                      dest='proclist_files',
+                      default=0,
+                      type='int',
+                      help=('number of files the local_smart put/take/touchup'
+                            ' routines are spread over, so that they compile in'
+                            ' parallel (0 = one per core)'))
 
     parser.add_option('-c', '--catmap',
                       default=False,

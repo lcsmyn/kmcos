@@ -63,6 +63,15 @@ List of commands
             lat_int is EXPERIMENTAL and not made
             for production, yet.
 
+        -j/--proclist-files <number>
+            Spread the local_smart put/take/touchup routines
+            over this many files, so that the Fortran compiler
+            builds them in parallel instead of working through
+            one huge proclist.f90 on a single core. They are
+            most of the generated code, so for a model with
+            many sites this is most of the build time.
+            Default is 0, meaning one file per core.
+
         -t/--temp_acc
             Use temporal acceleration scheme.
             Builds the modules base_acc.f90, lattice_acc.mpy,
